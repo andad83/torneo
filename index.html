@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torneo dei Piatti Italiani</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #fdf7f1;
+            color: #4a4a4a;
+        }
+        .title-font {
+            font-family: 'Lora', serif;
+        }
+        .bracket-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-x: auto;
+            min-height: 600px; /* Ensure enough height for connectors */
+        }
+        .round {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            width: 250px;
+            margin: 0 20px;
+        }
+        .match {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            margin: 20px 0;
+            flex-grow: 1;
+        }
+        .match-pair {
+             display: flex;
+             flex-direction: column;
+             justify-content: center;
+             background-color: #fff;
+             border-radius: 8px;
+             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+             padding: 10px;
+             min-height: 100px;
+        }
+        .competitor {
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+            margin: 5px 0;
+            text-transform: capitalize;
+        }
+        .competitor:not(.winner):not(.loser):hover {
+            background-color: #f0f8ff;
+            border-color: #4a90e2;
+        }
+        .competitor.winner {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            border-color: #4CAF50;
+        }
+        .competitor.loser {
+            background-color: #fbe9e7;
+            color: #9e9e9e;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        .competitor.placeholder {
+            background-color: #f5f5f5;
+            color: #bdbdbd;
+            cursor: default;
+            text-align: center;
+        }
+        .vs-separator {
+            text-align: center;
+            font-weight: bold;
+            color: #d32f2f;
+            font-family: 'Lora', serif;
+            margin: 2px 0;
+        }
+        .match-connector {
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            width: 30px;
+            height: 2px;
+            background-color: #bdbdbd;
+        }
+        .round-connector {
+            position: absolute;
+            right: -40px;
+            width: 2px;
+            background-color: #bdbdbd;
+        }
+        .final .match-connector, .final .round-connector {
+            display: none;
+        }
+        .winner-trophy {
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold title-font text-red-800">Torneo dei Piatti Italiani</h1>
+            <p class="text-lg text-gray-600 mt-2">Scegli il tuo piatto preferito in ogni scontro per incoronare il campione!</p>
+        </header>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg">
+            <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo</h2>
+            
+            <div class="mb-6 w-full max-w-sm">
+                <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria Piatti:</label>
+                <select id="category-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
+                    <option value="primi">Primi Piatti</option>
+                    <option value="secondiEContorni">Secondi e Contorni</option>
+                    <option value="dolci">Dolci</option>
+                    <option value="biscotti">Biscotti Supermercato</option>
+                    <option value="attori">Attori</option>
+                    <option value="nomiStrani">Nomi Strani</option>
+                </select>
+            </div>
+
+            <div class="mb-8 w-full max-w-sm">
+                <label for="size-select" class="block text-gray-700 text-sm font-bold mb-2">Numero di Partecipanti:</label>
+                <select id="size-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
+                    <option value="8">8</option>
+                    <option value="16" selected>16</option>
+                    <option value="32">32</option>
+                    <option value="64">64</option>
+                </select>
+                <p id="size-warning" class="text-sm text-red-500 mt-2 hidden">Attenzione: Non ci sono abbastanza elementi per questa dimensione del torneo nella categoria selezionata.</p>
+            </div>
+
+            <button id="start-tournament-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg">Inizia Torneo</button>
+        </div>
+
+        <!-- Tournament Container -->
+        <div id="tournament-container" class="hidden">
+            <main id="tournament-bracket" class="bracket-container">
+                <!-- Le colonne del torneo verranno generate qui da JavaScript -->
+            </main>
+
+            <div id="winner-display" class="text-center mt-12"></div>
+            
+            <footer class="text-center mt-12">
+                <button id="reset-button" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-red-800 transition-colors duration-300">Ricomincia Torneo</button>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DATA ---
+            // Dati estratti e puliti dai file CSV forniti dall'utente.
+            const dishData = {
+                primi: [
+                    "tagliatelle al ragu", "pasta e fagioli", "ravioli ricotta e spinaci", "riso patate e cozze",
+                    "zuppa di pesce", "spaghetti alla puttanesca", "penne all'arrabbiata", "pasta patate e provola",
+                    "lasagne al ragù", "risotto alla zucca", "gnocchi alla sorrentina", "spaghetti burro e parmigiano",
+                    "risotto giallo", "canederli", "tortellini panna e prosciutto", "pennette con salmone",
+                    "spaghetti con le vongole", "tortelli cremaschi", "pappa al pomodoro", "ribollita",
+                    "cacio e pepe", "spaghetti aglio e olio", "cannelloni ricotta e spinaci", "spaghetti all'assassina",
+                    "carbonara", "agnolotti", "linguine con astice", "tagliolini burro e limone",
+                    "pappardelle al cinghiale", "pasta alla norma", "pasta al forno", "pici all'aglione",
+                    "tortellini in brodo", "orechiette broccoli e alici", "velluttata di verdure", "spaghetti alla nerano",
+                    "parmigiana di melanzane", "risotto ai funghi", "spaghetti con polpette", "anelletti al forno con ragù e piselli",
+                    "trofie al pesto", "pasta con le sarde", "gnocchi alla romana", "zuppa di cipolle",
+                    "spaghetti al pomodoro", "orecchiette cime di rapa", "tagliolini con tartufo", "stelline in brodo",
+                    "amatriciana", "fusilli alla trapanese", "linguine al nero di seppia", "minestrone con crostini",
+                    "pizzoccheri", "gricia", "gnocchi al gorgonzola", "pasta al tonno", "spazzle burro e salvia",
+                    "pasta allo scoglio", "pasta e lenticchie", "spaghetti con la bottarga", "pasta ai peperoni cruschi"
+                ].map(d => d.toLowerCase().trim()).filter(d => d),
+
+                secondiEContorni: [
+                    "Polpette al sugo", "Polpo e patate", "Calamari ripieni", "Polpettone", "Brasato", "Filetto al pepe verde",
+                    "Pollo alla cacciatora", "Nervetti", "Vitello tonnato", "Saltimbocca", "Faraona ripiena", "Seppie in umido",
+                    "Spezzatino", "Baccalà mantecato", "Cotechino bollito", "Stinco di maiale", "Fiorentina", "Scaloppine",
+                    "Impepata di cozze", "Coniglio alla ligure", "Ossobuco alla milanese", "Orata al forno", "Bollito con salse",
+                    "Anatra all'arancia", "Cotoletta alla milanese", "Costolette d'agnello", "Trippa alla romana", "Alici fritte",
+                    "Fritto misto", "Grigliata di pesce", "Braciole al sugo", "Peperoni ripieni", "Polenta e cinghiale", "Cacciucco",
+                    "Fagioli con le cotiche", "Fettine panate", "Arrosto di vitello", "Fegato alla veneziana", "Capesante gratinate",
+                    "Stracotto d'asino", "Pollo arrosto", "Crocchette di patate", "Guancia di maiale brasata", "Lumache aglio e prezzemolo",
+                    "Costine di maiale", "Verdure grigliate", "Salmone in crosta", "Merluzzo fritto", "Patate al forno", "Torta di patate",
+                    "Purè di patate", "Carne alla pizzaiola", "Patatine fritte", "Polenta concia", "Ratatouille", "Carciofi alla giudia",
+                    "Caponata", "Peperonata", "Funghi trifolati", "Finocchi gratinati", "Cipolle caramellate", "Frittata di cipolle",
+                    "Zucca al forno", "Cicoria ripassata"
+                ].map(d => d.toLowerCase().trim()).filter(d => d),
+
+                dolci: [
+                    "Tiramisù", "Cannolo siciliano", "Delizia al limone", "Sorbetto al limone", "Crostata alla marmellata",
+                    "Torta caprese", "Cassata", "Torta pesca e amaretti", "Salame al cioccolato", "Pandoro", "Colomba",
+                    "Bertolina", "Torta pere e cioccolato", "Mousse tre cioccolati", "Mele cotte con cannella", "Sfogliatella riccia",
+                    "Strudel", "Maritozzo", "Seadas", "Panettone", "Pasticciotto leccese", "Zabaione", "Struffoli", "Millefoglie",
+                    "Torta tenerina", "Zeppole", "Torta diplomatica", "Tortino al cioccolato", "Graffe", "Cartellate pugliesi",
+                    "Ciambellone", "Chiacchiere / Frittelle", "Meringata", "Torta delle rose", "Castagnaccio", "Panna cotta",
+                    "Semifreddo al caffè", "Bonet", "Pane dei morti", "Torta di mele", "Sospiri", "Torta paradiso",
+                    "Torta ricotta e cioccolato", "Babà", "Tartufo (bianco/nero)", "Torrone", "Mostaccioli",
+                    "Crostata di frutta con crema pasticcera", "Castagnole / Tortellli", "Piadina con la nutella", "Croccante alle mandorle",
+                    "Torta della nonna", "Pastiera napoletana", "Torta fredda allo yogurt", "Panpepato", "Sbrisolona", "Zuppa inglese",
+                    "Profiteroles", "Torta mimosa", "Gelato artigianale", "Torta cocco e cioccolato", "Creme caramel", "Torta alla carota"
+                ].map(d => d.toLowerCase().trim()).filter(d => d),
+
+                biscotti: [
+                    "Macine", "Galletti", "Scacchieri", "Baiocchi al pistacchio", "Pan di stelle", "Baiocchi", "Oro Saiwa",
+                    "Molinetti", "Abbracci", "Digestive", "Tarallucci", "Girotondi", "Nascondini", "Settembrini", "Campagnole",
+                    "Batticuori", "Cuor di mela", "Pannocchie", "Ritornelli", "Pavesini", "Gocciole", "Canestrelli", "Rigoli",
+                    "Gocciole dark/caramello", "Plasmon", "Tenerezze al limone", "Primizie", "Krumiri", "Ringo", "GranCereale",
+                    "Buoni così", "Nonnine Doria", "Bucaneve", "Oreo", "Grisbì (nocciola, cioccolato, crema, limone)",
+                    "Zuppalatte Colussi", "Nutella Biscuits", "Zalet", "Biscotti Atene", "Ancorauno Tre Marie",
+                    "Wafer Loacker (cacao/latte)", "Butter cookie Royal Danish", "Gran Turchese", "Biscotti allo zenzero Ikea",
+                    "Lotus", "Mikado", "Kinder Cards", "Ciambelle Balocco", "Cookies Milka", "Amaretti Balocco",
+                    "Zuppole Balocco", "Girandole Balocco", "Sfogliatine Balocco", "OroCiok", "Savoiardi Balocco",
+                    "Oswego Colussi", "Cantuccini"
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d), // Clean quotes from some entries
+
+                attori: [
+                    "Brad Pitt", "Tom Cruise", "George Clooney", "Richard Gere", "Jake Gyllenhal", "Ryan Gosling",
+                    "jamie foxx", "michael b jordan", "Tom Hardy", "Jacob Elordi", "javier bardem", "Elio Germano",
+                    "Ben Affleck", "johnny depp", "Bradley Cooper", "Luca Marinelli", "Adrien Brody",
+                    "Leonardo di Caprio", "Sam Caflin", "Alessandro Borghi", "Paul Newman", "Cilian Murphy",
+                    "Robert Pattinson", "Jude Law", "James Deen", "Robert Downey Jr.", "Timothée Chalamet",
+                    "robert redford", "Christian Bale", "Matthew McConnaguyeehgahgurnafdha", "Viggo Mortensen",
+                    "Ashton Kutcher", "Hugh Jacckkkkmannn", "Henry Cavill", "Oscar Isaac", "Lee Pace",
+                    "Matt Damon", "Aaron Taylor-Johnson", "Armie Hammer", "Jeremy White", "Sean Penn",
+                    "Chris Hemsworth", "Harrison Ford", "Edward Norton", "Omar Sy", "Keanu Reeves",
+                    "Chris Hemsword", "Bruce Willis", "Djimon Hounsou.", "Benicio Del Toro", "Adam Driver",
+                    "Jason Statham", "Patrick Dempsey", "Vincent Cassel", "Jeffrey Dean Morgan", "Adam Brody",
+                    "Benedict Cumberbatch", "Andrew Garfield", "Matt Bomer", "Ryan Reynolds"
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d),
+
+                nomiStrani: [
+                    "concetto vecchio", "cataldo Stragapede", "loris borro", "delfo bardelli", "Felicino Vaniglia",
+                    "Nunziante Splendore", "Emilio Stancampiano", "carmelinda pietragalla", "salvatore arcadipane",
+                    "catena de grande", "felice porto", "Maurizio Capezzuoli Ranchi", "Andrea Scozzafava",
+                    "Leopoldo Matrangolo", "dora peto", "cristofaro colombo", "dino alexander protasoni",
+                    "juan gerardo belen rossi", "Domenicantonio Sabetta", "Medardo Gabelli", "Roberto Grissino",
+                    "basilio marascio", "enrica guastadisegni", "pasqualino indelicato", "hilary porro",
+                    "Angelo Caimano", "Mariarca Bonaiuto", "Ascanio Bellopede", "sebastiano derelitto",
+                    "bruno casadio", "umano teodori", "dennis volante", "Saverio Maniglia", "Marco Porcile",
+                    "davide terrone", "raimondo capodicasa", "michelino cloroformio", "lupo gelsi",
+                    "mattia joe venturelli", "Crisele Ariola", "Feliciano Bufalino", "Euplio Piccirillo",
+                    "novella novelli", "alessandro pastormerlo", "antonio figarola", "giusy lembo",
+                    "Loreto Fantozzi", "Olga Fungo", "Felice Spinello", "Floro Guarna", "dionigi volpe",
+                    "andrea favagrossa", "yuri bombardi", "Melchiorre Candino", "Defendente Circoncisi",
+                    "Felice Scoccimarro", "Loredano Guasina", "costanzo pungente", "ignazia giuseppa gelsomino",
+                    "giangaleazzo ganzarolli", "Antonfranco Pasquale", "Regina Della Guerra", "Angelo Viavattene",
+                    "ciro cipolletta", "fiorello cacau", "decimo galletti", "detalmo granzotto",
+                    "Giorgio Meloni", "Omodeo Gianolo Paolo", "Eusachio Machera", "kevin testagrossa",
+                    "iriza alma orofino", "vanna tagliavini", "bardilio puggioni", "Brando Benifei",
+                    "Giuseppe Trombatore", "Immacolata Veloce", "demetrio cutrupi", "viola di domenicantonio",
+                    "adriana degli effetti luciani", "gasparino facchinetti forlani", "Fiona Cacalli",
+                    "Derek Vassallo", "Fabrizio Frinolli Puzzilli", "Antonangelo Casula", "Placido Recupero",
+                    "Luca Sederino", "Pasqualino Fattaccio", "Letterio Grillo", "Berardino Tarallo", "V" // 'V' is likely an incomplete entry, but included for completeness based on snippet.
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d && d !== 'v') // Clean quotes and filter out single 'v'
+            };
+            
+            const roundTitles = ["Ottavi di Finale", "Quarti di Finale", "Semifinali", "Finale"];
+
+            // --- DOM Elements ---
+            const startScreen = document.getElementById('start-screen');
+            const tournamentContainer = document.getElementById('tournament-container');
+            const categorySelect = document.getElementById('category-select');
+            const sizeSelect = document.getElementById('size-select');
+            const startButton = document.getElementById('start-tournament-button');
+            const resetButton = document.getElementById('reset-button');
+            const sizeWarning = document.getElementById('size-warning');
+            const bracket = document.getElementById('tournament-bracket');
+            const winnerDisplay = document.getElementById('winner-display');
+
+            // --- FUNCTIONS ---
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function validateTournamentSize() {
+                const selectedCategory = categorySelect.value;
+                const selectedSize = parseInt(sizeSelect.value);
+                const availableDishes = dishData[selectedCategory].length;
+
+                if (selectedSize > availableDishes) {
+                    sizeWarning.classList.remove('hidden');
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    sizeWarning.classList.add('hidden');
+                    startButton.disabled = false;
+                    startButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+            function createTournament(dishes, tournamentSize) {
+                bracket.innerHTML = '';
+                winnerDisplay.innerHTML = '';
+
+                const competitors = shuffle([...dishes]).slice(0, tournamentSize);
+                let numberOfRounds = Math.log2(tournamentSize);
+
+                for (let i = 0; i < numberOfRounds; i++) {
+                    const roundDiv = document.createElement('div');
+                    roundDiv.className = `round round-${i+1}`;
+                    if (i === numberOfRounds - 1) roundDiv.classList.add('final');
+
+                    const roundTitle = document.createElement('h2');
+                    roundTitle.className = 'text-2xl font-bold text-center mb-6 title-font text-red-700';
+                    roundTitle.textContent = roundTitles[i];
+                    roundDiv.appendChild(roundTitle);
+                    
+                    const matchesInRound = tournamentSize / Math.pow(2, i+1);
+
+                    for (let j = 0; j < matchesInRound; j++) {
+                        const matchDiv = document.createElement('div');
+                        matchDiv.className = 'match';
+                        matchDiv.dataset.round = i;
+                        matchDiv.dataset.match = j;
+
+                        const matchPair = document.createElement('div');
+                        matchPair.className = 'match-pair';
+
+                        const competitor1 = document.createElement('div');
+                        competitor1.className = 'competitor';
+                        competitor1.dataset.competitorId = `r${i}m${j}c1`;
+
+                        const vs = document.createElement('div');
+                        vs.className = 'vs-separator';
+                        vs.textContent = 'vs';
+
+                        const competitor2 = document.createElement('div');
+                        competitor2.className = 'competitor';
+                        competitor2.dataset.competitorId = `r${i}m${j}c2`;
+
+                        if (i === 0) {
+                            competitor1.textContent = competitors[j * 2];
+                            competitor2.textContent = competitors[j * 2 + 1];
+                            competitor1.addEventListener('click', handleMatchClick);
+                            competitor2.addEventListener('click', handleMatchClick);
+                        } else {
+                            competitor1.textContent = 'In attesa...';
+                            competitor2.textContent = 'In attesa...';
+                            competitor1.classList.add('placeholder');
+                            competitor2.classList.add('placeholder');
+                        }
+
+                        matchPair.appendChild(competitor1);
+                        matchPair.appendChild(vs);
+                        matchPair.appendChild(competitor2);
+                        matchDiv.appendChild(matchPair);
+                        
+                        // Add connectors
+                        if (i < numberOfRounds - 1) {
+                            const connector = document.createElement('div');
+                            connector.className = 'match-connector';
+                            matchDiv.appendChild(connector);
+
+                            // Calculate connector height dynamically for visual alignment
+                            const baseMatchHeight = 100; // min-height of .match-pair
+                            const matchMargin = 40; // margin-bottom of .match
+                            const roundHeight = (baseMatchHeight + matchMargin) * Math.pow(2, i);
+                            const connectorHeight = roundHeight - baseMatchHeight;
+
+                            if (j % 2 === 0) { // Only add round connector for the first match of a pair
+                                const roundConnector = document.createElement('div');
+                                roundConnector.className = 'round-connector';
+                                roundConnector.style.height = `${connectorHeight + baseMatchHeight}px`; // Adjust height based on round
+                                roundConnector.style.top = `calc(50% - ${connectorHeight / 2}px)`; // Center vertically
+                                matchDiv.appendChild(roundConnector);
+                            }
+                        }
+                        
+                        roundDiv.appendChild(matchDiv);
+                    }
+                    bracket.appendChild(roundDiv);
+                }
+            }
+
+            function handleMatchClick(event) {
+                const selected = event.currentTarget;
+                const matchPair = selected.parentElement;
+                
+                if (matchPair.dataset.winner || selected.classList.contains('placeholder')) return; // Match already decided or not yet active
+
+                const competitors = Array.from(matchPair.getElementsByClassName('competitor'));
+                const winner = selected;
+                const loser = competitors.find(c => c !== winner);
+
+                winner.classList.add('winner');
+                loser.classList.add('loser');
+                matchPair.dataset.winner = winner.textContent;
+
+                advanceWinner(winner);
+            }
+
+            function advanceWinner(winner) {
+                const matchPair = winner.parentElement;
+                const matchDiv = matchPair.parentElement;
+                const round = parseInt(matchDiv.dataset.round);
+                const match = parseInt(matchDiv.dataset.match);
+
+                const nextRound = round + 1;
+                const nextMatch = Math.floor(match / 2);
+                const isFirstInNextPair = match % 2 === 0;
+
+                const nextMatchCompetitorSlotQuery = isFirstInNextPair ?
+                    `[data-competitor-id="r${nextRound}m${nextMatch}c1"]` :
+                    `[data-competitor-id="r${nextRound}m${nextMatch}c2"]`;
+
+                const nextSlot = bracket.querySelector(nextMatchCompetitorSlotQuery);
+
+                if (nextSlot) {
+                    nextSlot.textContent = winner.textContent;
+                    nextSlot.classList.remove('placeholder');
+
+                    // Check if the opponent is ready to enable the next match
+                    const opponentSlotQuery = isFirstInNextPair ?
+                        `[data-competitor-id="r${nextRound}m${nextMatch}c2"]` :
+                        `[data-competitor-id="r${nextRound}m${nextMatch}c1"]`;
+                    const opponentSlot = bracket.querySelector(opponentSlotQuery);
+
+                    if (opponentSlot && !opponentSlot.classList.contains('placeholder')) {
+                        nextSlot.addEventListener('click', handleMatchClick);
+                        opponentSlot.addEventListener('click', handleMatchClick);
+                    }
+                } else {
+                    // Final winner
+                    displayWinner(winner.textContent);
+                }
+            }
+
+            function displayWinner(name) {
+                const winnerDisplay = document.getElementById('winner-display');
+                winnerDisplay.innerHTML = `
+                    <div class="winner-trophy">
+                        <h2 class="text-3xl font-bold title-font text-amber-600">Vincitore del Torneo!</h2>
+                        <p class="text-5xl font-bold my-4 text-red-800" style="text-transform: capitalize;">${name}</p>
+                        <div class="text-7xl">🏆</div>
+                    </div>
+                `;
+            }
+
+            function initApp() {
+                startScreen.classList.remove('hidden');
+                tournamentContainer.classList.add('hidden');
+                winnerDisplay.innerHTML = ''; // Clear any previous winner display
+                validateTournamentSize(); // Initial validation
+            }
+
+            // --- Event Listeners ---
+            startButton.addEventListener('click', function() {
+                const selectedCategory = categorySelect.value;
+                const selectedSize = parseInt(sizeSelect.value);
+                
+                if (selectedSize > dishData[selectedCategory].length) {
+                    // This should ideally be caught by validateTournamentSize and disable the button
+                    // but as a fallback, show an error in console.
+                    console.error("Not enough items for the selected tournament size in this category.");
+                    return;
+                }
+
+                startScreen.classList.add('hidden');
+                tournamentContainer.classList.remove('hidden');
+                createTournament(dishData[selectedCategory], selectedSize);
+            });
+
+            resetButton.addEventListener('click', initApp);
+            categorySelect.addEventListener('change', validateTournamentSize);
+            sizeSelect.addEventListener('change', validateTournamentSize);
+
+            // --- INITIALIZATION ---
+            initApp();
+        });
+    </script>
+</body>
+</html>
