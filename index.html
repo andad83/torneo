@@ -8,6 +8,23 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs - Minimal setup for Gemini API key injection in Canvas -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        // Only getAuth is needed to trigger the API key injection in Canvas
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Global variables for Firebase (will be populated by Canvas environment)
+        // These are needed for initializeApp to work correctly in Canvas
+        window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        window.__firebase_config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        window.__initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase app (required for Canvas to inject API key)
+        window.firebaseApp = initializeApp(window.__firebase_config);
+        // Get auth instance (even if not explicitly used, helps with Canvas setup)
+        window.auth = getAuth(window.firebaseApp);
+    </script>
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
