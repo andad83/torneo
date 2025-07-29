@@ -8,37 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Global variables for Firebase (will be populated by Canvas environment)
-        window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        window.__firebase_config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        window.__initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        window.firebaseApp = initializeApp(window.__firebase_config);
-        window.db = getFirestore(window.firebaseApp);
-        window.auth = getAuth(window.firebaseApp);
-
-        // Exporting for use in main script block
-        window.firebase = {
-            auth: window.auth,
-            db: window.db,
-            signInAnonymously: signInAnonymously,
-            signInWithCustomToken: signInWithCustomToken,
-            onAuthStateChanged: onAuthStateChanged,
-            setDoc: setDoc,
-            collection: collection,
-            query: query,
-            onSnapshot: onSnapshot,
-            doc: doc,
-            deleteDoc: deleteDoc
-        };
-    </script>
-
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -52,33 +21,23 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding: 1rem; /* Reduced padding for mobile */
+            padding: 2rem;
             overflow-x: auto;
-            min-height: 600px;
+            min-height: 600px; /* Ensure enough height for connectors */
         }
         .round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
-            min-width: 180px; /* Adjusted min-width for responsiveness */
-            width: 220px; /* Default width for larger screens */
-            margin: 0 8px; /* Reduced margin for mobile */
+            width: 250px;
+            margin: 0 20px;
         }
-
-        @media (min-width: 768px) { /* Medium screens and up */
-            .round {
-                min-width: 250px;
-                width: 250px;
-                margin: 0 20px;
-            }
-        }
-
         .match {
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            margin: 12px 0; /* Adjusted margin */
+            margin: 20px 0;
             flex-grow: 1;
         }
         .match-pair {
@@ -88,32 +47,21 @@
              background-color: #fff;
              border-radius: 8px;
              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-             padding: 6px; /* Reduced padding */
-             min-height: 70px; /* Reduced min-height */
+             padding: 10px;
+             min-height: 100px;
         }
         .competitor {
-            padding: 6px; /* Reduced padding */
+            padding: 10px;
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 1px solid #e0e0e0;
-            margin: 2px 0; /* Reduced margin */
+            margin: 5px 0;
             text-transform: capitalize;
-            font-size: 0.85rem; /* Adjusted font size */
         }
-        @media (min-width: 768px) {
-            .competitor {
-                padding: 10px;
-                margin: 5px 0;
-                font-size: 1rem;
-            }
-        }
-
         .competitor:not(.winner):not(.loser):hover {
             background-color: #f0f8ff;
             border-color: #4a90e2;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .competitor.winner {
             background-color: #4CAF50;
@@ -139,24 +87,18 @@
             color: #d32f2f;
             font-family: 'Lora', serif;
             margin: 2px 0;
-            font-size: 0.75rem; /* Adjusted font size */
-        }
-        @media (min-width: 768px) {
-            .vs-separator {
-                font-size: 1rem;
-            }
         }
         .match-connector {
             position: absolute;
-            right: -15px; /* Adjusted for smaller margins */
+            right: -30px;
             top: 50%;
-            width: 15px; /* Adjusted width */
+            width: 30px;
             height: 2px;
             background-color: #bdbdbd;
         }
         .round-connector {
             position: absolute;
-            right: -23px; /* Adjusted for smaller margins */
+            right: -40px;
             width: 2px;
             background-color: #bdbdbd;
         }
@@ -171,20 +113,6 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #4CAF50;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -193,23 +121,21 @@
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold title-font text-red-800">Torneo dei Piatti Italiani</h1>
             <p class="text-lg text-gray-600 mt-2">Scegli il tuo piatto preferito in ogni scontro per incoronare il campione!</p>
-            <p class="text-sm text-gray-500 mt-1" id="user-id-display"></p>
         </header>
 
-        <!-- Loading Screen -->
-        <div id="loading-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <div class="spinner mb-4"></div>
-            <p class="text-xl text-gray-700">Caricamento categorie...</p>
-        </div>
-
         <!-- Start Screen -->
-        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
+        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg">
             <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo</h2>
             
             <div class="mb-6 w-full max-w-sm">
-                <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria:</label>
+                <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria Piatti:</label>
                 <select id="category-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
-                    <!-- Options populated by JavaScript -->
+                    <option value="primi">Primi Piatti</option>
+                    <option value="secondiEContorni">Secondi e Contorni</option>
+                    <option value="dolci">Dolci</option>
+                    <option value="biscotti">Biscotti Supermercato</option>
+                    <option value="attori">Attori</option>
+                    <option value="nomiStrani">Nomi Strani</option>
                 </select>
             </div>
 
@@ -225,17 +151,6 @@
             </div>
 
             <button id="start-tournament-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg">Inizia Torneo</button>
-
-            <hr class="my-8 w-full max-w-md border-t-2 border-gray-200">
-
-            <h3 class="text-2xl font-bold title-font text-gray-700 mb-4">Genera Nuova Lista con AI ✨</h3>
-            <div class="mb-4 w-full max-w-sm">
-                <label for="ai-category-prompt" class="block text-gray-700 text-sm font-bold mb-2">Tipo di elementi da generare:</label>
-                <input type="text" id="ai-category-prompt" placeholder="Es: città italiane, sport olimpici" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300"/>
-            </div>
-            <button id="generate-list-button" class="bg-purple-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-purple-700 transition-colors duration-300">Genera Nuova Lista ✨</button>
-            <p id="generate-feedback" class="text-sm mt-2 hidden"></p>
-            <div id="generate-spinner" class="spinner mt-4 hidden"></div>
         </div>
 
         <!-- Tournament Container -->
@@ -253,19 +168,10 @@
     </div>
 
     <script>
-        // Ensure Firebase is loaded before running main script
-        window.addEventListener('load', async () => {
-            if (typeof window.firebase === 'undefined') {
-                console.error("Firebase SDK not loaded. Please ensure the module script runs correctly.");
-                document.getElementById('loading-screen').innerHTML = '<p class="text-red-500">Errore: Firebase non caricato. Ricarica la pagina.</p>';
-                return;
-            }
-
-            const { auth, db, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setDoc, collection, query, onSnapshot, doc } = window.firebase;
-
+        document.addEventListener('DOMContentLoaded', function () {
             // --- DATA ---
-            // Initial built-in data
-            let dishData = {
+            // Dati estratti e puliti dai file CSV forniti dall'utente.
+            const dishData = {
                 primi: [
                     "tagliatelle al ragu", "pasta e fagioli", "ravioli ricotta e spinaci", "riso patate e cozze",
                     "zuppa di pesce", "spaghetti alla puttanesca", "penne all'arrabbiata", "pasta patate e provola",
@@ -324,7 +230,7 @@
                     "Lotus", "Mikado", "Kinder Cards", "Ciambelle Balocco", "Cookies Milka", "Amaretti Balocco",
                     "Zuppole Balocco", "Girandole Balocco", "Sfogliatine Balocco", "OroCiok", "Savoiardi Balocco",
                     "Oswego Colussi", "Cantuccini"
-                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d),
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d), // Clean quotes from some entries
 
                 attori: [
                     "Brad Pitt", "Tom Cruise", "George Clooney", "Richard Gere", "Jake Gyllenhal", "Ryan Gosling",
@@ -341,12 +247,35 @@
                     "Benedict Cumberbatch", "Andrew Garfield", "Matt Bomer", "Ryan Reynolds"
                 ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d),
 
+                nomiStrani: [
+                    "concetto vecchio", "cataldo Stragapede", "loris borro", "delfo bardelli", "Felicino Vaniglia",
+                    "Nunziante Splendore", "Emilio Stancampiano", "carmelinda pietragalla", "salvatore arcadipane",
+                    "catena de grande", "felice porto", "Maurizio Capezzuoli Ranchi", "Andrea Scozzafava",
+                    "Leopoldo Matrangolo", "dora peto", "cristofaro colombo", "dino alexander protasoni",
+                    "juan gerardo belen rossi", "Domenicantonio Sabetta", "Medardo Gabelli", "Roberto Grissino",
+                    "basilio marascio", "enrica guastadisegni", "pasqualino indelicato", "hilary porro",
+                    "Angelo Caimano", "Mariarca Bonaiuto", "Ascanio Bellopede", "sebastiano derelitto",
+                    "bruno casadio", "umano teodori", "dennis volante", "Saverio Maniglia", "Marco Porcile",
+                    "davide terrone", "raimondo capodicasa", "michelino cloroformio", "lupo gelsi",
+                    "mattia joe venturelli", "Crisele Ariola", "Feliciano Bufalino", "Euplio Piccirillo",
+                    "novella novelli", "alessandro pastormerlo", "antonio figarola", "giusy lembo",
+                    "Loreto Fantozzi", "Olga Fungo", "Felice Spinello", "Floro Guarna", "dionigi volpe",
+                    "andrea favagrossa", "yuri bombardi", "Melchiorre Candino", "Defendente Circoncisi",
+                    "Felice Scoccimarro", "Loredano Guasina", "costanzo pungente", "ignazia giuseppa gelsomino",
+                    "giangaleazzo ganzarolli", "Antonfranco Pasquale", "Regina Della Guerra", "Angelo Viavattene",
+                    "ciro cipolletta", "fiorello cacau", "decimo galletti", "detalmo granzotto",
+                    "Giorgio Meloni", "Omodeo Gianolo Paolo", "Eusachio Machera", "kevin testagrossa",
+                    "iriza alma orofino", "vanna tagliavini", "bardilio puggioni", "Brando Benifei",
+                    "Giuseppe Trombatore", "Immacolata Veloce", "demetrio cutrupi", "viola di domenicantonio",
+                    "adriana degli effetti luciani", "gasparino facchinetti forlani", "Fiona Cacalli",
+                    "Derek Vassallo", "Fabrizio Frinolli Puzzilli", "Antonangelo Casula", "Placido Recupero",
+                    "Luca Sederino", "Pasqualino Fattaccio", "Letterio Grillo", "Berardino Tarallo", "V" // 'V' is likely an incomplete entry, but included for completeness based on snippet.
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d && d !== 'v') // Clean quotes and filter out single 'v'
             };
             
             const roundTitles = ["Ottavi di Finale", "Quarti di Finale", "Semifinali", "Finale"];
 
             // --- DOM Elements ---
-            const loadingScreen = document.getElementById('loading-screen');
             const startScreen = document.getElementById('start-screen');
             const tournamentContainer = document.getElementById('tournament-container');
             const categorySelect = document.getElementById('category-select');
@@ -356,16 +285,6 @@
             const sizeWarning = document.getElementById('size-warning');
             const bracket = document.getElementById('tournament-bracket');
             const winnerDisplay = document.getElementById('winner-display');
-            const userIdDisplay = document.getElementById('user-id-display');
-
-            // Gemini AI elements
-            const aiCategoryPromptInput = document.getElementById('ai-category-prompt');
-            const generateListButton = document.getElementById('generate-list-button');
-            const generateFeedback = document.getElementById('generate-feedback');
-            const generateSpinner = document.getElementById('generate-spinner');
-
-            let currentUserId = null;
-            const appId = window.__app_id;
 
             // --- FUNCTIONS ---
             function shuffle(array) {
@@ -378,19 +297,10 @@
 
             function validateTournamentSize() {
                 const selectedCategory = categorySelect.value;
-                if (!dishData.hasOwnProperty(selectedCategory)) {
-                    sizeWarning.textContent = "Categoria selezionata non valida.";
-                    sizeWarning.classList.remove('hidden');
-                    startButton.disabled = true;
-                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
-                    return;
-                }
-
                 const selectedSize = parseInt(sizeSelect.value);
-                const availableItems = dishData[selectedCategory].length;
+                const availableDishes = dishData[selectedCategory].length;
 
-                if (selectedSize > availableItems) {
-                    sizeWarning.textContent = `Attenzione: Non ci sono abbastanza elementi (${availableItems}) per questa dimensione del torneo (${selectedSize}) nella categoria selezionata.`;
+                if (selectedSize > availableDishes) {
                     sizeWarning.classList.remove('hidden');
                     startButton.disabled = true;
                     startButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -401,11 +311,11 @@
                 }
             }
 
-            function createTournament(items, tournamentSize) {
+            function createTournament(dishes, tournamentSize) {
                 bracket.innerHTML = '';
                 winnerDisplay.innerHTML = '';
 
-                const competitors = shuffle([...items]).slice(0, tournamentSize);
+                const competitors = shuffle([...dishes]).slice(0, tournamentSize);
                 let numberOfRounds = Math.log2(tournamentSize);
 
                 for (let i = 0; i < numberOfRounds; i++) {
@@ -414,7 +324,7 @@
                     if (i === numberOfRounds - 1) roundDiv.classList.add('final');
 
                     const roundTitle = document.createElement('h2');
-                    roundTitle.className = 'text-xl md:text-2xl font-bold text-center mb-4 md:mb-6 title-font text-red-700';
+                    roundTitle.className = 'text-2xl font-bold text-center mb-6 title-font text-red-700';
                     roundTitle.textContent = roundTitles[i];
                     roundDiv.appendChild(roundTitle);
                     
@@ -464,16 +374,17 @@
                             connector.className = 'match-connector';
                             matchDiv.appendChild(connector);
 
-                            const baseMatchHeight = 70; // min-height of .match-pair
-                            const matchMargin = 24; // margin-bottom of .match (12px top + 12px bottom)
+                            // Calculate connector height dynamically for visual alignment
+                            const baseMatchHeight = 100; // min-height of .match-pair
+                            const matchMargin = 40; // margin-bottom of .match
                             const roundHeight = (baseMatchHeight + matchMargin) * Math.pow(2, i);
                             const connectorHeight = roundHeight - baseMatchHeight;
 
-                            if (j % 2 === 0) {
+                            if (j % 2 === 0) { // Only add round connector for the first match of a pair
                                 const roundConnector = document.createElement('div');
                                 roundConnector.className = 'round-connector';
-                                roundConnector.style.height = `${connectorHeight + baseMatchHeight}px`;
-                                roundConnector.style.top = `calc(50% - ${connectorHeight / 2}px)`;
+                                roundConnector.style.height = `${connectorHeight + baseMatchHeight}px`; // Adjust height based on round
+                                roundConnector.style.top = `calc(50% - ${connectorHeight / 2}px)`; // Center vertically
                                 matchDiv.appendChild(roundConnector);
                             }
                         }
@@ -488,7 +399,7 @@
                 const selected = event.currentTarget;
                 const matchPair = selected.parentElement;
                 
-                if (matchPair.dataset.winner || selected.classList.contains('placeholder')) return;
+                if (matchPair.dataset.winner || selected.classList.contains('placeholder')) return; // Match already decided or not yet active
 
                 const competitors = Array.from(matchPair.getElementsByClassName('competitor'));
                 const winner = selected;
@@ -521,6 +432,7 @@
                     nextSlot.textContent = winner.textContent;
                     nextSlot.classList.remove('placeholder');
 
+                    // Check if the opponent is ready to enable the next match
                     const opponentSlotQuery = isFirstInNextPair ?
                         `[data-competitor-id="r${nextRound}m${nextMatch}c2"]` :
                         `[data-competitor-id="r${nextRound}m${nextMatch}c1"]`;
@@ -531,6 +443,7 @@
                         opponentSlot.addEventListener('click', handleMatchClick);
                     }
                 } else {
+                    // Final winner
                     displayWinner(winner.textContent);
                 }
             }
@@ -539,148 +452,19 @@
                 const winnerDisplay = document.getElementById('winner-display');
                 winnerDisplay.innerHTML = `
                     <div class="winner-trophy">
-                        <h2 class="text-2xl md:text-3xl font-bold title-font text-amber-600">Vincitore del Torneo!</h2>
-                        <p class="text-4xl md:text-5xl font-bold my-4 text-red-800" style="text-transform: capitalize;">${name}</p>
-                        <div class="text-6xl md:text-7xl">🏆</div>
+                        <h2 class="text-3xl font-bold title-font text-amber-600">Vincitore del Torneo!</h2>
+                        <p class="text-5xl font-bold my-4 text-red-800" style="text-transform: capitalize;">${name}</p>
+                        <div class="text-7xl">🏆</div>
                     </div>
                 `;
             }
 
-            // Function to save category items to Firestore
-            async function saveCategoryItemsToFirestore(categoryName, itemsArray) {
-                const uniqueItems = [...new Set(itemsArray)];
-
-                if (currentUserId) {
-                    try {
-                        const categoryRef = doc(db, `artifacts/${appId}/users/${currentUserId}/categories`, categoryName);
-                        await setDoc(categoryRef, {
-                            name: categoryName,
-                            items: uniqueItems
-                        });
-                        console.log(`Categoria "${categoryName}" salvata con successo su Firestore.`);
-                    } catch (e) {
-                        console.error("Errore durante il salvataggio della categoria su Firestore: ", e);
-                    }
-                } else {
-                    dishData[categoryName] = uniqueItems; // Add to local data if not authenticated
-                    console.warn(`Categoria "${categoryName}" aggiunta localmente (utente non autenticato).`);
-                }
-                updateCategorySelect();
-            }
-
-            // Update category select dropdown dynamically
-            function updateCategorySelect() {
-                const currentSelectedValue = categorySelect.value;
-                categorySelect.innerHTML = '';
-                for (const key in dishData) {
-                    if (dishData.hasOwnProperty(key) && dishData[key].length > 0) { // Only add categories with items
-                        const option = document.createElement('option');
-                        option.value = key;
-                        option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
-                        categorySelect.appendChild(option);
-                    }
-                }
-                if (dishData.hasOwnProperty(currentSelectedValue)) {
-                    categorySelect.value = currentSelectedValue;
-                } else if (Object.keys(dishData).length > 0) {
-                    categorySelect.value = Object.keys(dishData)[0]; // Select first available category
-                } else {
-                    categorySelect.innerHTML = '<option value="">Nessuna categoria disponibile</option>';
-                    startButton.disabled = true;
-                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
-                }
-                validateTournamentSize();
-            }
-
             function initApp() {
-                loadingScreen.classList.remove('hidden');
-                startScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
                 tournamentContainer.classList.add('hidden');
-                winnerDisplay.innerHTML = '';
-                aiCategoryPromptInput.value = '';
-                generateFeedback.classList.add('hidden');
-                generateSpinner.classList.add('hidden');
-                
-                // Set a timeout to ensure the start screen eventually appears,
-                // even if Firebase loading encounters an unexpected halt.
-                // This is a fallback for debugging.
-                setTimeout(() => {
-                    if (loadingScreen.classList.contains('hidden')) {
-                        // Already loaded by Firebase, do nothing.
-                    } else {
-                        console.warn("Firebase loading timeout: Showing start screen without full data confirmation.");
-                        loadingScreen.classList.add('hidden');
-                        startScreen.classList.remove('hidden');
-                        updateCategorySelect(); // Attempt to update with whatever data is available
-                    }
-                }, 5000); // 5 seconds timeout
+                winnerDisplay.innerHTML = ''; // Clear any previous winner display
+                validateTournamentSize(); // Initial validation
             }
-
-            // --- Firebase Authentication and Data Loading ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUserId = user.uid;
-                    userIdDisplay.textContent = `ID Utente: ${currentUserId}`;
-                    console.log("Authenticated as:", currentUserId);
-
-                    const categoriesColRef = collection(db, `artifacts/${appId}/users/${currentUserId}/categories`);
-                    let initialSnapshotLoaded = false; // Flag to track if initial snapshot has completed
-
-                    onSnapshot(categoriesColRef, (snapshot) => {
-                        console.log("Firestore snapshot received.");
-                        snapshot.docChanges().forEach(change => {
-                            const categoryName = change.doc.id;
-                            const categoryData = change.doc.data();
-                            if (change.type === "added" || change.type === "modified") {
-                                dishData[categoryName] = categoryData.items;
-                                console.log(`Category ${categoryName} loaded/updated.`);
-                            } else if (change.type === "removed") {
-                                delete dishData[categoryName];
-                                console.log(`Category ${categoryName} removed.`);
-                            }
-                        });
-                        updateCategorySelect();
-                        
-                        // Hide loading screen and show start screen only after the first snapshot
-                        if (!initialSnapshotLoaded) {
-                            loadingScreen.classList.add('hidden');
-                            startScreen.classList.remove('hidden');
-                            initialSnapshotLoaded = true;
-                            console.log("Initial categories loaded, showing start screen.");
-                        }
-                    }, (error) => {
-                        console.error("Error listening to categories:", error);
-                        loadingScreen.innerHTML = `<p class="text-red-500">Errore nel caricamento delle categorie: ${error.message}</p>`;
-                        // Ensure UI is unblocked even on error
-                        if (!initialSnapshotLoaded) {
-                            loadingScreen.classList.add('hidden');
-                            startScreen.classList.remove('hidden');
-                            initialSnapshotLoaded = true;
-                            console.log("Error loading categories, showing start screen with fallback.");
-                        }
-                    });
-
-                } else {
-                    console.log("No user authenticated, attempting anonymous sign-in.");
-                    try {
-                        if (window.__initial_auth_token) {
-                            await signInWithCustomToken(auth, window.__initial_auth_token);
-                            console.log("Signed in with custom token.");
-                        } else {
-                            await signInAnonymously(auth);
-                            console.log("Signed in anonymously.");
-                        }
-                        // onAuthStateChanged will be re-triggered with the user object
-                    } catch (error) {
-                        console.error("Error signing in:", error);
-                        loadingScreen.innerHTML = `<p class="text-red-500">Errore di autenticazione: ${error.message}</p>`;
-                        // Ensure UI is unblocked even on auth error
-                        loadingScreen.classList.add('hidden');
-                        startScreen.classList.remove('hidden');
-                        updateCategorySelect(); // Try to update categories with built-in ones
-                    }
-                }
-            });
 
             // --- Event Listeners ---
             startButton.addEventListener('click', function() {
@@ -688,6 +472,8 @@
                 const selectedSize = parseInt(sizeSelect.value);
                 
                 if (selectedSize > dishData[selectedCategory].length) {
+                    // This should ideally be caught by validateTournamentSize and disable the button
+                    // but as a fallback, show an error in console.
                     console.error("Not enough items for the selected tournament size in this category.");
                     return;
                 }
@@ -700,81 +486,6 @@
             resetButton.addEventListener('click', initApp);
             categorySelect.addEventListener('change', validateTournamentSize);
             sizeSelect.addEventListener('change', validateTournamentSize);
-
-            // --- Gemini AI List Generation ---
-            generateListButton.addEventListener('click', async function() {
-                const aiCategoryPrompt = aiCategoryPromptInput.value.trim();
-                if (!aiCategoryPrompt) {
-                    generateFeedback.textContent = "Inserisci un tipo di elementi da generare (es: città italiane).";
-                    generateFeedback.className = "text-sm mt-2 text-red-500";
-                    generateFeedback.classList.remove('hidden');
-                    return;
-                }
-
-                generateFeedback.classList.add('hidden');
-                generateSpinner.classList.remove('hidden');
-                generateListButton.disabled = true;
-                generateListButton.classList.add('opacity-50', 'cursor-not-allowed');
-
-                try {
-                    const prompt = `Genera una lista di 16 ${aiCategoryPrompt} famosi. Rispondi in formato JSON, un array di stringhe, dove ogni stringa è il nome di un elemento. Non aggiungere altro testo o formattazione oltre al JSON.`;
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                    const payload = {
-                        contents: chatHistory,
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "ARRAY",
-                                items: { "type": "STRING" }
-                            }
-                        }
-                    };
-                    const apiKey = ""; // Canvas will provide this
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await response.json();
-
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const jsonString = result.candidates[0].content.parts[0].text;
-                        const generatedItems = JSON.parse(jsonString);
-
-                        if (generatedItems && Array.isArray(generatedItems) && generatedItems.length > 0) {
-                            const newCategoryName = `generati_${aiCategoryPrompt.replace(/\s+/g, '_').toLowerCase()}`;
-                            await saveCategoryItemsToFirestore(newCategoryName, generatedItems); // Pass array directly
-                            
-                            generateFeedback.textContent = `Lista di "${aiCategoryPrompt}" generata e aggiunta come categoria "${newCategoryName}"!`;
-                            generateFeedback.className = "text-sm mt-2 text-green-600";
-                            aiCategoryPromptInput.value = ''; // Clear input
-                            categorySelect.value = newCategoryName; // Select the new category
-                            validateTournamentSize();
-                        } else {
-                            generateFeedback.textContent = "L'AI non ha generato una lista valida. Riprova con un prompt diverso.";
-                            generateFeedback.className = "text-sm mt-2 text-orange-500";
-                        }
-                    } else {
-                        generateFeedback.textContent = "Impossibile generare la lista. Riprova.";
-                        generateFeedback.className = "text-sm mt-2 text-red-500";
-                        console.error("Gemini API response structure unexpected for list generation:", result);
-                    }
-                } catch (error) {
-                    generateFeedback.textContent = `Errore durante la generazione della lista: ${error.message}`;
-                    generateFeedback.className = "text-sm mt-2 text-red-500";
-                    console.error("Error calling Gemini API for list generation:", error);
-                } finally {
-                    generateSpinner.classList.add('hidden');
-                    generateFeedback.classList.remove('hidden');
-                    generateListButton.disabled = false;
-                    generateListButton.classList.remove('opacity-50', 'cursor-not-allowed');
-                }
-            });
 
             // --- INITIALIZATION ---
             initApp();
