@@ -21,23 +21,31 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding: 2rem;
+            padding: 1rem; /* Reduced padding for mobile */
             overflow-x: auto;
-            min-height: 600px; /* Ensure enough height for connectors */
+            min-height: 600px;
         }
         .round {
             display: flex;
             flex-direction: column;
             justify-content: space-around;
-            width: 250px;
-            margin: 0 20px;
+            min-width: 200px; /* Adjusted min-width for responsiveness */
+            width: 250px; /* Default width for larger screens */
+            margin: 0 10px; /* Reduced margin for mobile */
         }
+
+        @media (min-width: 768px) { /* Medium screens and up */
+            .round {
+                margin: 0 20px;
+            }
+        }
+
         .match {
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            margin: 20px 0;
+            margin: 15px 0; /* Adjusted margin */
             flex-grow: 1;
         }
         .match-pair {
@@ -47,21 +55,32 @@
              background-color: #fff;
              border-radius: 8px;
              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-             padding: 10px;
-             min-height: 100px;
+             padding: 8px; /* Reduced padding */
+             min-height: 80px; /* Reduced min-height */
         }
         .competitor {
-            padding: 10px;
+            padding: 8px; /* Reduced padding */
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 1px solid #e0e0e0;
-            margin: 5px 0;
+            margin: 3px 0; /* Reduced margin */
             text-transform: capitalize;
+            font-size: 0.9rem; /* Adjusted font size */
         }
+        @media (min-width: 768px) {
+            .competitor {
+                padding: 10px;
+                margin: 5px 0;
+                font-size: 1rem;
+            }
+        }
+
         .competitor:not(.winner):not(.loser):hover {
             background-color: #f0f8ff;
             border-color: #4a90e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         .competitor.winner {
             background-color: #4CAF50;
@@ -87,18 +106,24 @@
             color: #d32f2f;
             font-family: 'Lora', serif;
             margin: 2px 0;
+            font-size: 0.8rem; /* Adjusted font size */
+        }
+        @media (min-width: 768px) {
+            .vs-separator {
+                font-size: 1rem;
+            }
         }
         .match-connector {
             position: absolute;
-            right: -30px;
+            right: -20px; /* Adjusted for smaller margins */
             top: 50%;
-            width: 30px;
+            width: 20px; /* Adjusted width */
             height: 2px;
             background-color: #bdbdbd;
         }
         .round-connector {
             position: absolute;
-            right: -40px;
+            right: -30px; /* Adjusted for smaller margins */
             width: 2px;
             background-color: #bdbdbd;
         }
@@ -128,14 +153,9 @@
             <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo</h2>
             
             <div class="mb-6 w-full max-w-sm">
-                <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria Piatti:</label>
+                <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria:</label>
                 <select id="category-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
-                    <option value="primi">Primi Piatti</option>
-                    <option value="secondiEContorni">Secondi e Contorni</option>
-                    <option value="dolci">Dolci</option>
-                    <option value="biscotti">Biscotti Supermercato</option>
-                    <option value="attori">Attori</option>
-                    <option value="nomiStrani">Nomi Strani</option>
+                    <!-- Options populated by JavaScript -->
                 </select>
             </div>
 
@@ -151,6 +171,25 @@
             </div>
 
             <button id="start-tournament-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg">Inizia Torneo</button>
+
+            <hr class="my-8 w-full max-w-md border-t-2 border-gray-200">
+
+            <h3 class="text-2xl font-bold title-font text-gray-700 mb-4">Carica una Nuova Categoria da File CSV</h3>
+            <div class="mb-4 w-full max-w-sm">
+                <label for="file-input" class="block text-gray-700 text-sm font-bold mb-2">Seleziona File CSV:</label>
+                <input type="file" id="file-input" accept=".csv" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-violet-50 file:text-violet-700
+                    hover:file:bg-violet-100"/>
+            </div>
+            <div class="mb-4 w-full max-w-sm">
+                <label for="new-category-name" class="block text-gray-700 text-sm font-bold mb-2">Nome Nuova Categoria:</label>
+                <input type="text" id="new-category-name" placeholder="Es: Canzoni, Libri" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300"/>
+            </div>
+            <button id="upload-category-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300">Carica Categoria</button>
+            <p id="upload-feedback" class="text-sm mt-2 hidden"></p>
         </div>
 
         <!-- Tournament Container -->
@@ -170,8 +209,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // --- DATA ---
-            // Dati estratti e puliti dai file CSV forniti dall'utente.
-            const dishData = {
+            // Dati iniziali estratti e puliti dai file CSV forniti dall'utente.
+            let dishData = {
                 primi: [
                     "tagliatelle al ragu", "pasta e fagioli", "ravioli ricotta e spinaci", "riso patate e cozze",
                     "zuppa di pesce", "spaghetti alla puttanesca", "penne all'arrabbiata", "pasta patate e provola",
@@ -230,7 +269,7 @@
                     "Lotus", "Mikado", "Kinder Cards", "Ciambelle Balocco", "Cookies Milka", "Amaretti Balocco",
                     "Zuppole Balocco", "Girandole Balocco", "Sfogliatine Balocco", "OroCiok", "Savoiardi Balocco",
                     "Oswego Colussi", "Cantuccini"
-                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d), // Clean quotes from some entries
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d),
 
                 attori: [
                     "Brad Pitt", "Tom Cruise", "George Clooney", "Richard Gere", "Jake Gyllenhal", "Ryan Gosling",
@@ -286,6 +325,11 @@
             const bracket = document.getElementById('tournament-bracket');
             const winnerDisplay = document.getElementById('winner-display');
 
+            const fileInput = document.getElementById('file-input');
+            const newCategoryNameInput = document.getElementById('new-category-name');
+            const uploadCategoryButton = document.getElementById('upload-category-button');
+            const uploadFeedback = document.getElementById('upload-feedback');
+
             // --- FUNCTIONS ---
             function shuffle(array) {
                 for (let i = array.length - 1; i > 0; i--) {
@@ -297,10 +341,20 @@
 
             function validateTournamentSize() {
                 const selectedCategory = categorySelect.value;
-                const selectedSize = parseInt(sizeSelect.value);
-                const availableDishes = dishData[selectedCategory].length;
+                // Ensure the selected category exists in dishData
+                if (!dishData.hasOwnProperty(selectedCategory)) {
+                    sizeWarning.textContent = "Categoria selezionata non valida.";
+                    sizeWarning.classList.remove('hidden');
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    return;
+                }
 
-                if (selectedSize > availableDishes) {
+                const selectedSize = parseInt(sizeSelect.value);
+                const availableItems = dishData[selectedCategory].length;
+
+                if (selectedSize > availableItems) {
+                    sizeWarning.textContent = `Attenzione: Non ci sono abbastanza elementi (${availableItems}) per questa dimensione del torneo (${selectedSize}) nella categoria selezionata.`;
                     sizeWarning.classList.remove('hidden');
                     startButton.disabled = true;
                     startButton.classList.add('opacity-50', 'cursor-not-allowed');
@@ -311,11 +365,11 @@
                 }
             }
 
-            function createTournament(dishes, tournamentSize) {
+            function createTournament(items, tournamentSize) {
                 bracket.innerHTML = '';
                 winnerDisplay.innerHTML = '';
 
-                const competitors = shuffle([...dishes]).slice(0, tournamentSize);
+                const competitors = shuffle([...items]).slice(0, tournamentSize);
                 let numberOfRounds = Math.log2(tournamentSize);
 
                 for (let i = 0; i < numberOfRounds; i++) {
@@ -324,7 +378,7 @@
                     if (i === numberOfRounds - 1) roundDiv.classList.add('final');
 
                     const roundTitle = document.createElement('h2');
-                    roundTitle.className = 'text-2xl font-bold text-center mb-6 title-font text-red-700';
+                    roundTitle.className = 'text-xl md:text-2xl font-bold text-center mb-4 md:mb-6 title-font text-red-700';
                     roundTitle.textContent = roundTitles[i];
                     roundDiv.appendChild(roundTitle);
                     
@@ -375,8 +429,8 @@
                             matchDiv.appendChild(connector);
 
                             // Calculate connector height dynamically for visual alignment
-                            const baseMatchHeight = 100; // min-height of .match-pair
-                            const matchMargin = 40; // margin-bottom of .match
+                            const baseMatchHeight = 80; // min-height of .match-pair
+                            const matchMargin = 30; // margin-bottom of .match (15px top + 15px bottom)
                             const roundHeight = (baseMatchHeight + matchMargin) * Math.pow(2, i);
                             const connectorHeight = roundHeight - baseMatchHeight;
 
@@ -452,18 +506,62 @@
                 const winnerDisplay = document.getElementById('winner-display');
                 winnerDisplay.innerHTML = `
                     <div class="winner-trophy">
-                        <h2 class="text-3xl font-bold title-font text-amber-600">Vincitore del Torneo!</h2>
-                        <p class="text-5xl font-bold my-4 text-red-800" style="text-transform: capitalize;">${name}</p>
-                        <div class="text-7xl">🏆</div>
+                        <h2 class="text-2xl md:text-3xl font-bold title-font text-amber-600">Vincitore del Torneo!</h2>
+                        <p class="text-4xl md:text-5xl font-bold my-4 text-red-800" style="text-transform: capitalize;">${name}</p>
+                        <div class="text-6xl md:text-7xl">🏆</div>
                     </div>
                 `;
+            }
+
+            // Function to add new data from CSV
+            function addDataFromCSV(categoryName, csvContent) {
+                const lines = csvContent.split('\n');
+                const newItems = [];
+                // Assuming CSV has tiers in columns, we'll take all non-empty values from the first 4 columns
+                lines.forEach(line => {
+                    const cells = line.split(',').map(cell => cell.trim());
+                    for (let i = 0; i < Math.min(cells.length, 4); i++) { // Limit to first 4 columns (Tiers)
+                        const item = cells[i].toLowerCase().replace(/"/g, ''); // Remove quotes
+                        if (item && item !== 'v' && !item.includes('tier') && !item.includes('1) inserire') && !item.includes('2) rispettare') && !item.includes('3) non andiamo') && !item.includes('1) dovete immaginare') && !item.includes('2) ogni concorrente') && !item.includes('3) non si può immaginare') && !item.includes('4) l\'aggiunta di')) { // Filter out empty, 'v', and 'tier' headers, and instruction rows
+                            newItems.push(item);
+                        }
+                    }
+                });
+                // Use a Set to ensure uniqueness
+                dishData[categoryName] = [...new Set(newItems)];
+                console.log(`Loaded ${dishData[categoryName].length} items for category: ${categoryName}`);
+            }
+
+            // Update category select dropdown dynamically
+            function updateCategorySelect() {
+                const currentSelectedValue = categorySelect.value; // Store current selection
+                categorySelect.innerHTML = ''; // Clear existing options
+                for (const key in dishData) {
+                    if (dishData.hasOwnProperty(key)) {
+                        const option = document.createElement('option');
+                        option.value = key;
+                        // Capitalize first letter and add spaces for display
+                        option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                        categorySelect.appendChild(option);
+                    }
+                }
+                // Try to re-select the previously selected category, or default to 'primi'
+                if (dishData.hasOwnProperty(currentSelectedValue)) {
+                    categorySelect.value = currentSelectedValue;
+                } else {
+                    categorySelect.value = 'primi';
+                }
+                validateTournamentSize(); // Re-validate after updating options
             }
 
             function initApp() {
                 startScreen.classList.remove('hidden');
                 tournamentContainer.classList.add('hidden');
                 winnerDisplay.innerHTML = ''; // Clear any previous winner display
-                validateTournamentSize(); // Initial validation
+                uploadFeedback.classList.add('hidden'); // Hide feedback message
+                fileInput.value = ''; // Clear file input
+                newCategoryNameInput.value = ''; // Clear category name input
+                updateCategorySelect(); // Populate categories on init
             }
 
             // --- Event Listeners ---
@@ -472,8 +570,6 @@
                 const selectedSize = parseInt(sizeSelect.value);
                 
                 if (selectedSize > dishData[selectedCategory].length) {
-                    // This should ideally be caught by validateTournamentSize and disable the button
-                    // but as a fallback, show an error in console.
                     console.error("Not enough items for the selected tournament size in this category.");
                     return;
                 }
@@ -487,9 +583,63 @@
             categorySelect.addEventListener('change', validateTournamentSize);
             sizeSelect.addEventListener('change', validateTournamentSize);
 
+            uploadCategoryButton.addEventListener('click', function() {
+                const file = fileInput.files[0];
+                const newCategoryName = newCategoryNameInput.value.trim().toLowerCase();
+
+                if (!file) {
+                    uploadFeedback.textContent = "Seleziona un file CSV.";
+                    uploadFeedback.className = "text-sm mt-2 text-red-500";
+                    uploadFeedback.classList.remove('hidden');
+                    return;
+                }
+
+                if (!newCategoryName) {
+                    uploadFeedback.textContent = "Inserisci un nome per la nuova categoria.";
+                    uploadFeedback.className = "text-sm mt-2 text-red-500";
+                    uploadFeedback.classList.remove('hidden');
+                    return;
+                }
+
+                if (dishData.hasOwnProperty(newCategoryName)) {
+                    uploadFeedback.textContent = `La categoria "${newCategoryName}" esiste già. Scegli un altro nome o sovrascrivi.`;
+                    uploadFeedback.className = "text-sm mt-2 text-orange-500";
+                    uploadFeedback.classList.remove('hidden');
+                    // Optionally, add a confirm dialog here for overwrite
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        addDataFromCSV(newCategoryName, e.target.result);
+                        updateCategorySelect();
+                        uploadFeedback.textContent = `Categoria "${newCategoryName}" caricata con successo!`;
+                        uploadFeedback.className = "text-sm mt-2 text-green-600";
+                        uploadFeedback.classList.remove('hidden');
+                        newCategoryNameInput.value = ''; // Clear input after successful upload
+                        fileInput.value = ''; // Clear file input
+                        categorySelect.value = newCategoryName; // Select the newly added category
+                        validateTournamentSize(); // Re-validate
+                    } catch (error) {
+                        uploadFeedback.textContent = `Errore durante l'elaborazione del file: ${error.message}`;
+                        uploadFeedback.className = "text-sm mt-2 text-red-500";
+                        uploadFeedback.classList.remove('hidden');
+                        console.error("Error processing CSV file:", error);
+                    }
+                };
+                reader.onerror = function() {
+                    uploadFeedback.textContent = "Impossibile leggere il file.";
+                    uploadFeedback.className = "text-sm mt-2 text-red-500";
+                    uploadFeedback.classList.remove('hidden');
+                };
+                reader.readAsText(file);
+            });
+
             // --- INITIALIZATION ---
             initApp();
         });
     </script>
 </body>
 </html>
+
