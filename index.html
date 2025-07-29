@@ -341,30 +341,6 @@
                     "Benedict Cumberbatch", "Andrew Garfield", "Matt Bomer", "Ryan Reynolds"
                 ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d),
 
-                nomiStrani: [
-                    "concetto vecchio", "cataldo Stragapede", "loris borro", "delfo bardelli", "Felicino Vaniglia",
-                    "Nunziante Splendore", "Emilio Stancampiano", "carmelinda pietragalla", "salvatore arcadipane",
-                    "catena de grande", "felice porto", "Maurizio Capezzuoli Ranchi", "Andrea Scozzafava",
-                    "Leopoldo Matrangolo", "dora peto", "cristofaro colombo", "dino alexander protasoni",
-                    "juan gerardo belen rossi", "Domenicantonio Sabetta", "Medardo Gabelli", "Roberto Grissino",
-                    "basilio marascio", "enrica guastadisegni", "pasqualino indelicato", "hilary porro",
-                    "Angelo Caimano", "Mariarca Bonaiuto", "Ascanio Bellopede", "sebastiano derelitto",
-                    "bruno casadio", "umano teodori", "dennis volante", "Saverio Maniglia", "Marco Porcile",
-                    "davide terrone", "raimondo capodicasa", "michelino cloroformio", "lupo gelsi",
-                    "mattia joe venturelli", "Crisele Ariola", "Feliciano Bufalino", "Euplio Piccirillo",
-                    "novella novelli", "alessandro pastormerlo", "antonio figarola", "giusy lembo",
-                    "Loreto Fantozzi", "Olga Fungo", "Felice Spinello", "Floro Guarna", "dionigi volpe",
-                    "andrea favagrossa", "yuri bombardi", "Melchiorre Candino", "Defendente Circoncisi",
-                    "Felice Scoccimarro", "Loredano Guasina", "costanzo pungente", "ignazia giuseppa gelsomino",
-                    "giangaleazzo ganzarolli", "Antonfranco Pasquale", "Regina Della Guerra", "Angelo Viavattene",
-                    "ciro cipolletta", "fiorello cacau", "decimo galletti", "detalmo granzotto",
-                    "Giorgio Meloni", "Omodeo Gianolo Paolo", "Eusachio Machera", "kevin testagrossa",
-                    "iriza alma orofino", "vanna tagliavini", "bardilio puggioni", "Brando Benifei",
-                    "Giuseppe Trombatore", "Immacolata Veloce", "demetrio cutrupi", "viola di domenicantonio",
-                    "adriana degli effetti luciani", "gasparino facchinetti forlani", "Fiona Cacalli",
-                    "Derek Vassallo", "Fabrizio Frinolli Puzzilli", "Antonangelo Casula", "Placido Recupero",
-                    "Luca Sederino", "Pasqualino Fattaccio", "Letterio Grillo", "Berardino Tarallo", "V"
-                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d && d !== 'v')
             };
             
             const roundTitles = ["Ottavi di Finale", "Quarti di Finale", "Semifinali", "Finale"];
@@ -382,25 +358,11 @@
             const winnerDisplay = document.getElementById('winner-display');
             const userIdDisplay = document.getElementById('user-id-display');
 
-            // Removed CSV upload elements
-            // const fileInput = document.getElementById('file-input');
-            // const newCategoryNameInput = document.getElementById('new-category-name');
-            // const uploadCategoryButton = document.getElementById('upload-category-button');
-            // const uploadFeedback = document.getElementById('upload-feedback');
-
             // Gemini AI elements
             const aiCategoryPromptInput = document.getElementById('ai-category-prompt');
             const generateListButton = document.getElementById('generate-list-button');
             const generateFeedback = document.getElementById('generate-feedback');
             const generateSpinner = document.getElementById('generate-spinner');
-
-            // Removed image display elements
-            // const imageDisplayArea = document.getElementById('image-display-area');
-            // const selectedItemName = document.getElementById('selected-item-name');
-            // const selectedItemImage = document.getElementById('selected-item-image');
-            // const itemDescriptionSpinner = document.getElementById('item-description-spinner');
-            // const itemDescription = document.getElementById('item-description');
-
 
             let currentUserId = null;
             const appId = window.__app_id;
@@ -442,7 +404,6 @@
             function createTournament(items, tournamentSize) {
                 bracket.innerHTML = '';
                 winnerDisplay.innerHTML = '';
-                // imageDisplayArea.classList.add('hidden'); // Removed image display
 
                 const competitors = shuffle([...items]).slice(0, tournamentSize);
                 let numberOfRounds = Math.log2(tournamentSize);
@@ -537,9 +498,6 @@
                 loser.classList.add('loser');
                 matchPair.dataset.winner = winner.textContent;
 
-                // Removed image display and AI description call
-                // displaySelectedItem(winner.textContent);
-
                 advanceWinner(winner);
             }
 
@@ -586,16 +544,11 @@
                         <div class="text-6xl md:text-7xl">🏆</div>
                     </div>
                 `;
-                // Removed image display
-                // imageDisplayArea.classList.add('hidden'); // Hide image display once winner is declared
             }
 
-            // Removed displaySelectedItem function
-
-
-            // Function to add new data from CSV (still used by AI generation)
-            async function addDataFromCSV(categoryName, itemsArray) { // Changed csvContent to itemsArray
-                const uniqueItems = [...new Set(itemsArray)]; // Ensure uniqueness
+            // Function to save category items to Firestore
+            async function saveCategoryItemsToFirestore(categoryName, itemsArray) {
+                const uniqueItems = [...new Set(itemsArray)];
 
                 if (currentUserId) {
                     try {
@@ -604,19 +557,14 @@
                             name: categoryName,
                             items: uniqueItems
                         });
-                        // uploadFeedback.textContent = `Categoria "${categoryName}" caricata e salvata con successo!`; // Removed feedback element
-                        // uploadFeedback.className = "text-sm mt-2 text-green-600";
+                        console.log(`Categoria "${categoryName}" salvata con successo su Firestore.`);
                     } catch (e) {
-                        // uploadFeedback.textContent = `Errore durante il salvataggio della categoria: ${e.message}`; // Removed feedback element
-                        // uploadFeedback.className = "text-sm mt-2 text-red-500";
-                        console.error("Error saving document: ", e);
+                        console.error("Errore durante il salvataggio della categoria su Firestore: ", e);
                     }
                 } else {
-                    dishData[categoryName] = uniqueItems;
-                    // uploadFeedback.textContent = `Categoria "${categoryName}" caricata (non salvata, utente non autenticato).`; // Removed feedback element
-                    // uploadFeedback.className = "text-sm mt-2 text-orange-500";
+                    dishData[categoryName] = uniqueItems; // Add to local data if not authenticated
+                    console.warn(`Categoria "${categoryName}" aggiunta localmente (utente non autenticato).`);
                 }
-                // uploadFeedback.classList.remove('hidden'); // Removed feedback element
                 updateCategorySelect();
             }
 
@@ -649,20 +597,23 @@
                 startScreen.classList.add('hidden');
                 tournamentContainer.classList.add('hidden');
                 winnerDisplay.innerHTML = '';
-                // Removed image display elements init
-                // imageDisplayArea.classList.add('hidden');
-                // selectedItemName.textContent = '';
-                // selectedItemImage.src = '';
-                // itemDescription.textContent = '';
-                // itemDescriptionSpinner.classList.add('hidden');
-                // Removed CSV upload elements init
-                // uploadFeedback.classList.add('hidden');
-                // fileInput.value = '';
-                // newCategoryNameInput.value = '';
-                aiCategoryPromptInput.value = ''; // Clear AI prompt input
-                generateFeedback.classList.add('hidden'); // Hide AI feedback
-                generateSpinner.classList.add('hidden'); // Hide AI spinner
-                // Categories will be loaded by onAuthStateChanged listener
+                aiCategoryPromptInput.value = '';
+                generateFeedback.classList.add('hidden');
+                generateSpinner.classList.add('hidden');
+                
+                // Set a timeout to ensure the start screen eventually appears,
+                // even if Firebase loading encounters an unexpected halt.
+                // This is a fallback for debugging.
+                setTimeout(() => {
+                    if (loadingScreen.classList.contains('hidden')) {
+                        // Already loaded by Firebase, do nothing.
+                    } else {
+                        console.warn("Firebase loading timeout: Showing start screen without full data confirmation.");
+                        loadingScreen.classList.add('hidden');
+                        startScreen.classList.remove('hidden');
+                        updateCategorySelect(); // Attempt to update with whatever data is available
+                    }
+                }, 5000); // 5 seconds timeout
             }
 
             // --- Firebase Authentication and Data Loading ---
@@ -672,9 +623,11 @@
                     userIdDisplay.textContent = `ID Utente: ${currentUserId}`;
                     console.log("Authenticated as:", currentUserId);
 
-                    // Load user-specific categories from Firestore
                     const categoriesColRef = collection(db, `artifacts/${appId}/users/${currentUserId}/categories`);
+                    let initialSnapshotLoaded = false; // Flag to track if initial snapshot has completed
+
                     onSnapshot(categoriesColRef, (snapshot) => {
+                        console.log("Firestore snapshot received.");
                         snapshot.docChanges().forEach(change => {
                             const categoryName = change.doc.id;
                             const categoryData = change.doc.data();
@@ -687,24 +640,44 @@
                             }
                         });
                         updateCategorySelect();
-                        loadingScreen.classList.add('hidden');
-                        startScreen.classList.remove('hidden');
+                        
+                        // Hide loading screen and show start screen only after the first snapshot
+                        if (!initialSnapshotLoaded) {
+                            loadingScreen.classList.add('hidden');
+                            startScreen.classList.remove('hidden');
+                            initialSnapshotLoaded = true;
+                            console.log("Initial categories loaded, showing start screen.");
+                        }
                     }, (error) => {
                         console.error("Error listening to categories:", error);
                         loadingScreen.innerHTML = `<p class="text-red-500">Errore nel caricamento delle categorie: ${error.message}</p>`;
+                        // Ensure UI is unblocked even on error
+                        if (!initialSnapshotLoaded) {
+                            loadingScreen.classList.add('hidden');
+                            startScreen.classList.remove('hidden');
+                            initialSnapshotLoaded = true;
+                            console.log("Error loading categories, showing start screen with fallback.");
+                        }
                     });
 
                 } else {
-                    // Sign in anonymously if no user is logged in
+                    console.log("No user authenticated, attempting anonymous sign-in.");
                     try {
                         if (window.__initial_auth_token) {
                             await signInWithCustomToken(auth, window.__initial_auth_token);
+                            console.log("Signed in with custom token.");
                         } else {
                             await signInAnonymously(auth);
+                            console.log("Signed in anonymously.");
                         }
+                        // onAuthStateChanged will be re-triggered with the user object
                     } catch (error) {
                         console.error("Error signing in:", error);
                         loadingScreen.innerHTML = `<p class="text-red-500">Errore di autenticazione: ${error.message}</p>`;
+                        // Ensure UI is unblocked even on auth error
+                        loadingScreen.classList.add('hidden');
+                        startScreen.classList.remove('hidden');
+                        updateCategorySelect(); // Try to update categories with built-in ones
                     }
                 }
             });
@@ -727,10 +700,6 @@
             resetButton.addEventListener('click', initApp);
             categorySelect.addEventListener('change', validateTournamentSize);
             sizeSelect.addEventListener('change', validateTournamentSize);
-
-            // Removed CSV upload button listener and related functions
-            // uploadCategoryButton.addEventListener('click', function() { /* ... */ });
-            // function processFileUpload(file, categoryName) { /* ... */ }
 
             // --- Gemini AI List Generation ---
             generateListButton.addEventListener('click', async function() {
@@ -779,7 +748,7 @@
 
                         if (generatedItems && Array.isArray(generatedItems) && generatedItems.length > 0) {
                             const newCategoryName = `generati_${aiCategoryPrompt.replace(/\s+/g, '_').toLowerCase()}`;
-                            await addDataFromCSV(newCategoryName, generatedItems); // Pass array directly
+                            await saveCategoryItemsToFirestore(newCategoryName, generatedItems); // Pass array directly
                             
                             generateFeedback.textContent = `Lista di "${aiCategoryPrompt}" generata e aggiunta come categoria "${newCategoryName}"!`;
                             generateFeedback.className = "text-sm mt-2 text-green-600";
@@ -813,5 +782,4 @@
     </script>
 </body>
 </html>
-
 
