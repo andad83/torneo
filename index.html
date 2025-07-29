@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, query, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, query, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables for Firebase (will be populated by Canvas environment)
         window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -34,13 +34,8 @@
             collection: collection,
             query: query,
             onSnapshot: onSnapshot,
-            updateDoc: updateDoc,
-            arrayUnion: arrayUnion,
-            arrayRemove: arrayRemove,
-            deleteDoc: deleteDoc,
             doc: doc,
-            getDoc: getDoc,
-            serverTimestamp: serverTimestamp
+            deleteDoc: deleteDoc
         };
     </script>
 
@@ -190,75 +185,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Quiz Specific Styles */
-        .question-options button {
-            background-color: #f0f8ff;
-            border: 1px solid #4a90e2;
-            color: #4a4a4a;
-            padding: 10px 15px;
-            margin: 5px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            text-align: left;
-        }
-        .question-options button:hover:not(.selected):not(.correct):not(.incorrect) {
-            background-color: #e0f0ff;
-        }
-        .question-options button.selected {
-            background-color: #a0d0ff;
-            border-color: #2a70c2;
-            font-weight: bold;
-        }
-        .question-options button.correct {
-            background-color: #4CAF50;
-            color: white;
-            font-weight: bold;
-            border-color: #4CAF50;
-        }
-        .question-options button.incorrect {
-            background-color: #f44336;
-            color: white;
-            font-weight: bold;
-            border-color: #f44336;
-        }
-        .player-score-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background-color: #f5f5f5;
-            border-radius: 6px;
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        .player-score-item.current-player {
-            background-color: #e0f7fa;
-            border: 1px solid #00bcd4;
-        }
-        .player-score-item .player-name {
-            font-weight: bold;
-        }
-        .player-score-item .player-score {
-            font-weight: bold;
-            color: #3f51b5;
-        }
-        .timer-bar-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-            height: 10px;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-        .timer-bar {
-            height: 100%;
-            background-color: #4CAF50;
-            width: 100%;
-            transition: width linear;
-        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -273,19 +199,12 @@
         <!-- Loading Screen -->
         <div id="loading-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
             <div class="spinner mb-4"></div>
-            <p class="text-xl text-gray-700">Caricamento...</p>
+            <p class="text-xl text-gray-700">Caricamento categorie...</p>
         </div>
 
-        <!-- Main Menu Screen -->
-        <div id="main-menu-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg">
-            <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Scegli la Modalità di Gioco</h2>
-            <button id="start-solo-tournament-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg mb-4">Inizia Torneo (Singolo)</button>
-            <button id="start-multiplayer-quiz-button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 text-lg">Inizia Quiz Multiplayer</button>
-        </div>
-
-        <!-- Solo Tournament Start Screen -->
-        <div id="solo-start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo (Singolo)</h2>
+        <!-- Start Screen -->
+        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
+            <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo</h2>
             
             <div class="mb-6 w-full max-w-sm">
                 <label for="category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria:</label>
@@ -319,8 +238,8 @@
             <div id="generate-spinner" class="spinner mt-4 hidden"></div>
         </div>
 
-        <!-- Solo Tournament Container -->
-        <div id="solo-tournament-container" class="hidden">
+        <!-- Tournament Container -->
+        <div id="tournament-container" class="hidden">
             <main id="tournament-bracket" class="bracket-container">
                 <!-- Le colonne del torneo verranno generate qui da JavaScript -->
             </main>
@@ -328,113 +247,9 @@
             <div id="winner-display" class="text-center mt-12"></div>
             
             <footer class="text-center mt-12">
-                <button id="reset-solo-button" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-red-800 transition-colors duration-300">Torna al Menu Principale</button>
+                <button id="reset-button" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-red-800 transition-colors duration-300">Ricomincia Torneo</button>
             </footer>
         </div>
-
-        <!-- Multiplayer Quiz Setup Screen -->
-        <div id="multiplayer-setup-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <h2 class="text-3xl font-bold title-font text-blue-700 mb-6">Configura il tuo Quiz Multiplayer</h2>
-            
-            <div class="mb-4 w-full max-w-sm">
-                <label for="player-nickname" class="block text-gray-700 text-sm font-bold mb-2">Il tuo Nickname:</label>
-                <input type="text" id="player-nickname" placeholder="Inserisci il tuo nome" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300"/>
-            </div>
-
-            <div class="mb-6 w-full max-w-sm">
-                <label for="quiz-category-select" class="block text-gray-700 text-sm font-bold mb-2">Seleziona Categoria Quiz:</label>
-                <select id="quiz-category-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
-                    <!-- Options populated by JavaScript -->
-                </select>
-            </div>
-
-            <div class="mb-8 w-full max-w-sm">
-                <label for="quiz-size-select" class="block text-gray-700 text-sm font-bold mb-2">Numero di Domande (max 16):</label>
-                <select id="quiz-size-select" class="shadow border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300">
-                    <option value="4">4</option>
-                    <option value="8">8</option>
-                    <option value="16" selected>16</option>
-                </select>
-                <p id="quiz-size-warning" class="text-sm text-red-500 mt-2 hidden">Attenzione: Non ci sono abbastanza elementi per generare questa quantità di domande nella categoria selezionata.</p>
-            </div>
-
-            <button id="create-room-button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 text-lg mb-4">Crea Stanza</button>
-            
-            <hr class="my-8 w-full max-w-md border-t-2 border-gray-200">
-
-            <div class="mb-4 w-full max-w-sm">
-                <label for="room-id-input" class="block text-gray-700 text-sm font-bold mb-2">ID Stanza:</label>
-                <input type="text" id="room-id-input" placeholder="Inserisci ID Stanza" class="shadow appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:shadow-outline bg-gray-100 border-gray-300"/>
-            </div>
-            <button id="join-room-button" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-300 text-lg">Unisciti a Stanza</button>
-            <p id="room-feedback" class="text-sm mt-2 hidden"></p>
-            <div id="room-spinner" class="spinner mt-4 hidden"></div>
-
-            <footer class="text-center mt-12">
-                <button id="back-to-main-menu-button" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-300">Torna al Menu Principale</button>
-            </footer>
-        </div>
-
-        <!-- Quiz Lobby Screen -->
-        <div id="quiz-lobby-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <h2 class="text-3xl font-bold title-font text-blue-700 mb-6">Lobby della Stanza Quiz</h2>
-            <p class="text-xl text-gray-700 mb-4">ID Stanza: <span id="lobby-room-id" class="font-bold text-blue-800"></span></p>
-            <p class="text-md text-gray-600 mb-4">(Condividi questo ID con i tuoi amici)</p>
-
-            <h3 class="text-2xl font-bold title-font text-gray-700 mb-4">Giocatori Connessi:</h3>
-            <ul id="players-list" class="list-disc list-inside text-gray-800 mb-8 max-w-sm w-full">
-                <!-- Players will be listed here -->
-            </ul>
-
-            <button id="start-quiz-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg hidden">Inizia Quiz</button>
-            <p id="lobby-feedback" class="text-sm mt-2 hidden"></p>
-            <div id="lobby-spinner" class="spinner mt-4 hidden"></div>
-
-            <footer class="text-center mt-12">
-                <button id="leave-room-button" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-red-800 transition-colors duration-300">Abbandona Stanza</button>
-            </footer>
-        </div>
-
-        <!-- Quiz Game Screen -->
-        <div id="quiz-game-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <h2 class="text-2xl font-bold title-font text-blue-700 mb-4">Quiz in Corso</h2>
-            <p class="text-lg text-gray-600 mb-4">Domanda <span id="current-question-number"></span> di <span id="total-questions"></span></p>
-            
-            <div class="w-full max-w-xl bg-gray-100 p-6 rounded-lg shadow-inner mb-6">
-                <p id="question-text" class="text-xl font-semibold text-gray-800 mb-4 text-center"></p>
-                <div class="timer-bar-container">
-                    <div id="timer-bar" class="timer-bar"></div>
-                </div>
-            </div>
-
-            <div id="question-options" class="w-full max-w-xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <!-- Options populated by JavaScript -->
-            </div>
-            <p id="answer-feedback" class="text-md mt-2 hidden"></p>
-            <div id="quiz-spinner" class="spinner mt-4 hidden"></div>
-
-            <div class="w-full max-w-xl bg-white p-4 rounded-lg shadow-md">
-                <h3 class="text-xl font-bold text-gray-700 mb-3">Punteggi:</h3>
-                <ul id="quiz-players-scores" class="w-full">
-                    <!-- Player scores will be listed here -->
-                </ul>
-            </div>
-
-            <button id="next-question-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg mt-8 hidden">Prossima Domanda</button>
-            <button id="end-quiz-button" class="bg-red-600 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-red-700 transition-colors duration-300 mt-4 hidden">Termina Quiz</button>
-        </div>
-
-        <!-- Quiz Results Screen -->
-        <div id="quiz-results-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
-            <h2 class="text-3xl font-bold title-font text-blue-700 mb-6">Risultati Quiz!</h2>
-            <h3 class="text-2xl font-bold text-gray-800 mb-4">Classifica Finale:</h3>
-            <ul id="final-scores-list" class="list-none text-gray-800 mb-8 w-full max-w-sm">
-                <!-- Final scores will be listed here -->
-            </ul>
-            <button id="play-again-button" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 text-lg mb-4">Gioca Ancora</button>
-            <button id="return-to-main-menu-quiz-end" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-300">Torna al Menu Principale</button>
-        </div>
-
     </div>
 
     <script>
@@ -446,7 +261,7 @@
                 return;
             }
 
-            const { auth, db, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setDoc, collection, query, onSnapshot, updateDoc, arrayUnion, arrayRemove, deleteDoc, doc, getDoc, serverTimestamp } = window.firebase;
+            const { auth, db, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setDoc, collection, query, onSnapshot, doc } = window.firebase;
 
             // --- DATA ---
             // Initial built-in data
@@ -532,79 +347,27 @@
 
             // --- DOM Elements ---
             const loadingScreen = document.getElementById('loading-screen');
-            const mainMenuScreen = document.getElementById('main-menu-screen');
-            const soloStartScreen = document.getElementById('solo-start-screen');
-            const soloTournamentContainer = document.getElementById('solo-tournament-container');
-            const multiplayerSetupScreen = document.getElementById('multiplayer-setup-screen');
-            const quizLobbyScreen = document.getElementById('quiz-lobby-screen');
-            const quizGameScreen = document.getElementById('quiz-game-screen');
-            const quizResultsScreen = document.getElementById('quiz-results-screen');
+            const startScreen = document.getElementById('start-screen');
+            const tournamentContainer = document.getElementById('tournament-container');
+            const categorySelect = document.getElementById('category-select');
+            const sizeSelect = document.getElementById('size-select');
+            const startButton = document.getElementById('start-tournament-button');
+            const resetButton = document.getElementById('reset-button');
+            const sizeWarning = document.getElementById('size-warning');
+            const bracket = document.getElementById('tournament-bracket');
+            const winnerDisplay = document.getElementById('winner-display');
+            const userIdDisplay = document.getElementById('user-id-display');
 
-            const categorySelect = document.getElementById('category-select'); // Solo tournament category
-            const sizeSelect = document.getElementById('size-select'); // Solo tournament size
-            const startSoloTournamentButton = document.getElementById('start-solo-tournament-button');
-            const startTournamentButton = document.getElementById('start-tournament-button'); // Solo tournament start
-            const resetSoloButton = document.getElementById('reset-solo-button'); // Solo tournament reset
-            const sizeWarning = document.getElementById('size-warning'); // Solo tournament warning
-
+            // Gemini AI elements
             const aiCategoryPromptInput = document.getElementById('ai-category-prompt');
             const generateListButton = document.getElementById('generate-list-button');
             const generateFeedback = document.getElementById('generate-feedback');
             const generateSpinner = document.getElementById('generate-spinner');
 
-            const bracket = document.getElementById('tournament-bracket'); // Solo tournament bracket
-            const winnerDisplay = document.getElementById('winner-display'); // Solo tournament winner
-
-            // Multiplayer Quiz Elements
-            const startMultiplayerQuizButton = document.getElementById('start-multiplayer-quiz-button');
-            const playerNicknameInput = document.getElementById('player-nickname');
-            const quizCategorySelect = document.getElementById('quiz-category-select');
-            const quizSizeSelect = document.getElementById('quiz-size-select');
-            const quizSizeWarning = document.getElementById('quiz-size-warning');
-            const createRoomButton = document.getElementById('create-room-button');
-            const roomIdInput = document.getElementById('room-id-input');
-            const joinRoomButton = document.getElementById('join-room-button');
-            const roomFeedback = document.getElementById('room-feedback');
-            const roomSpinner = document.getElementById('room-spinner');
-            const backToMainMenuButton = document.getElementById('back-to-main-menu-button');
-
-            // Quiz Lobby Elements
-            const lobbyRoomIdDisplay = document.getElementById('lobby-room-id');
-            const playersList = document.getElementById('players-list');
-            const startQuizButton = document.getElementById('start-quiz-button');
-            const leaveRoomButton = document.getElementById('leave-room-button');
-            const lobbyFeedback = document.getElementById('lobby-feedback');
-            const lobbySpinner = document.getElementById('lobby-spinner');
-
-            // Quiz Game Elements
-            const currentQuestionNumberDisplay = document.getElementById('current-question-number');
-            const totalQuestionsDisplay = document.getElementById('total-questions');
-            const questionTextDisplay = document.getElementById('question-text');
-            const questionOptionsContainer = document.getElementById('question-options');
-            const answerFeedbackDisplay = document.getElementById('answer-feedback');
-            const quizSpinner = document.getElementById('quiz-spinner');
-            const quizPlayersScoresList = document.getElementById('quiz-players-scores');
-            const nextQuestionButton = document.getElementById('next-question-button');
-            const endQuizButton = document.getElementById('end-quiz-button');
-            const timerBar = document.getElementById('timer-bar');
-
-            // Quiz Results Elements
-            const finalScoresList = document.getElementById('final-scores-list');
-            const playAgainButton = document.getElementById('play-again-button');
-            const returnToMainMenuQuizEndButton = document.getElementById('return-to-main-menu-quiz-end');
-
-            const userIdDisplay = document.getElementById('user-id-display');
-
             let currentUserId = null;
-            let currentUserName = "Giocatore Anonimo"; // Default nickname
             const appId = window.__app_id;
-            let currentRoomId = null;
-            let unsubscribeRoomListener = null; // To manage Firestore real-time listener
 
-            const QUESTION_TIME_LIMIT = 15; // seconds
-            let questionTimerInterval = null;
-
-            // --- UTILITY FUNCTIONS ---
+            // --- FUNCTIONS ---
             function shuffle(array) {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -613,48 +376,32 @@
                 return array;
             }
 
-            function generateRoomId() {
-                return Math.random().toString(36).substring(2, 8).toUpperCase(); // 6-character alphanumeric
-            }
-
-            function showScreen(screenId) {
-                const screens = [loadingScreen, mainMenuScreen, soloStartScreen, soloTournamentContainer, multiplayerSetupScreen, quizLobbyScreen, quizGameScreen, quizResultsScreen];
-                screens.forEach(screen => {
-                    if (screen.id === screenId) {
-                        screen.classList.remove('hidden');
-                    } else {
-                        screen.classList.add('hidden');
-                    }
-                });
-            }
-
-            // --- SOLO TOURNAMENT LOGIC ---
-            function validateTournamentSize(selectElement, warningElement, buttonElement, categoryKey) {
-                const selectedCategory = selectElement.value;
+            function validateTournamentSize() {
+                const selectedCategory = categorySelect.value;
                 if (!dishData.hasOwnProperty(selectedCategory)) {
-                    warningElement.textContent = "Categoria selezionata non valida.";
-                    warningElement.classList.remove('hidden');
-                    buttonElement.disabled = true;
-                    buttonElement.classList.add('opacity-50', 'cursor-not-allowed');
+                    sizeWarning.textContent = "Categoria selezionata non valida.";
+                    sizeWarning.classList.remove('hidden');
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
                     return;
                 }
 
-                const selectedSize = parseInt(selectElement.value);
+                const selectedSize = parseInt(sizeSelect.value);
                 const availableItems = dishData[selectedCategory].length;
 
                 if (selectedSize > availableItems) {
-                    warningElement.textContent = `Attenzione: Non ci sono abbastanza elementi (${availableItems}) per questa dimensione del torneo (${selectedSize}) nella categoria selezionata.`;
-                    warningElement.classList.remove('hidden');
-                    buttonElement.disabled = true;
-                    buttonElement.classList.add('opacity-50', 'cursor-not-allowed');
+                    sizeWarning.textContent = `Attenzione: Non ci sono abbastanza elementi (${availableItems}) per questa dimensione del torneo (${selectedSize}) nella categoria selezionata.`;
+                    sizeWarning.classList.remove('hidden');
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
                 } else {
-                    warningElement.classList.add('hidden');
-                    buttonElement.disabled = false;
-                    buttonElement.classList.remove('opacity-50', 'cursor-not-allowed');
+                    sizeWarning.classList.add('hidden');
+                    startButton.disabled = false;
+                    startButton.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
             }
 
-            function createSoloTournament(items, tournamentSize) {
+            function createTournament(items, tournamentSize) {
                 bracket.innerHTML = '';
                 winnerDisplay.innerHTML = '';
 
@@ -697,8 +444,8 @@
                         if (i === 0) {
                             competitor1.textContent = competitors[j * 2];
                             competitor2.textContent = competitors[j * 2 + 1];
-                            competitor1.addEventListener('click', handleSoloMatchClick);
-                            competitor2.addEventListener('click', handleSoloMatchClick);
+                            competitor1.addEventListener('click', handleMatchClick);
+                            competitor2.addEventListener('click', handleMatchClick);
                         } else {
                             competitor1.textContent = 'In attesa...';
                             competitor2.textContent = 'In attesa...';
@@ -717,8 +464,8 @@
                             connector.className = 'match-connector';
                             matchDiv.appendChild(connector);
 
-                            const baseMatchHeight = 70;
-                            const matchMargin = 24;
+                            const baseMatchHeight = 70; // min-height of .match-pair
+                            const matchMargin = 24; // margin-bottom of .match (12px top + 12px bottom)
                             const roundHeight = (baseMatchHeight + matchMargin) * Math.pow(2, i);
                             const connectorHeight = roundHeight - baseMatchHeight;
 
@@ -737,7 +484,7 @@
                 }
             }
 
-            function handleSoloMatchClick(event) {
+            function handleMatchClick(event) {
                 const selected = event.currentTarget;
                 const matchPair = selected.parentElement;
                 
@@ -751,10 +498,10 @@
                 loser.classList.add('loser');
                 matchPair.dataset.winner = winner.textContent;
 
-                advanceSoloWinner(winner);
+                advanceWinner(winner);
             }
 
-            function advanceSoloWinner(winner) {
+            function advanceWinner(winner) {
                 const matchPair = winner.parentElement;
                 const matchDiv = matchPair.parentElement;
                 const round = parseInt(matchDiv.dataset.round);
@@ -780,15 +527,15 @@
                     const opponentSlot = bracket.querySelector(opponentSlotQuery);
 
                     if (opponentSlot && !opponentSlot.classList.contains('placeholder')) {
-                        nextSlot.addEventListener('click', handleSoloMatchClick);
-                        opponentSlot.addEventListener('click', handleSoloMatchClick);
+                        nextSlot.addEventListener('click', handleMatchClick);
+                        opponentSlot.addEventListener('click', handleMatchClick);
                     }
                 } else {
-                    displaySoloWinner(winner.textContent);
+                    displayWinner(winner.textContent);
                 }
             }
 
-            function displaySoloWinner(name) {
+            function displayWinner(name) {
                 const winnerDisplay = document.getElementById('winner-display');
                 winnerDisplay.innerHTML = `
                     <div class="winner-trophy">
@@ -799,9 +546,10 @@
                 `;
             }
 
-            // --- FIREBASE & DATA MANAGEMENT ---
+            // Function to save category items to Firestore
             async function saveCategoryItemsToFirestore(categoryName, itemsArray) {
                 const uniqueItems = [...new Set(itemsArray)];
+
                 if (currentUserId) {
                     try {
                         const categoryRef = doc(db, `artifacts/${appId}/users/${currentUserId}/categories`, categoryName);
@@ -814,42 +562,146 @@
                         console.error("Errore durante il salvataggio della categoria su Firestore: ", e);
                     }
                 } else {
-                    dishData[categoryName] = uniqueItems;
+                    dishData[categoryName] = uniqueItems; // Add to local data if not authenticated
                     console.warn(`Categoria "${categoryName}" aggiunta localmente (utente non autenticato).`);
                 }
-                updateCategorySelects();
+                updateCategorySelect();
             }
 
-            function updateCategorySelects() {
-                const selects = [categorySelect, quizCategorySelect];
-                selects.forEach(selectElement => {
-                    const currentSelectedValue = selectElement.value;
-                    selectElement.innerHTML = '';
-                    for (const key in dishData) {
-                        if (dishData.hasOwnProperty(key) && dishData[key].length > 0) {
-                            const option = document.createElement('option');
-                            option.value = key;
-                            option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
-                            selectElement.appendChild(option);
-                        }
+            // Update category select dropdown dynamically
+            function updateCategorySelect() {
+                const currentSelectedValue = categorySelect.value;
+                categorySelect.innerHTML = '';
+                for (const key in dishData) {
+                    if (dishData.hasOwnProperty(key) && dishData[key].length > 0) { // Only add categories with items
+                        const option = document.createElement('option');
+                        option.value = key;
+                        option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                        categorySelect.appendChild(option);
                     }
-                    if (dishData.hasOwnProperty(currentSelectedValue)) {
-                        selectElement.value = currentSelectedValue;
-                    } else if (Object.keys(dishData).length > 0) {
-                        selectElement.value = Object.keys(dishData)[0];
+                }
+                if (dishData.hasOwnProperty(currentSelectedValue)) {
+                    categorySelect.value = currentSelectedValue;
+                } else if (Object.keys(dishData).length > 0) {
+                    categorySelect.value = Object.keys(dishData)[0]; // Select first available category
+                } else {
+                    categorySelect.innerHTML = '<option value="">Nessuna categoria disponibile</option>';
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                validateTournamentSize();
+            }
+
+            function initApp() {
+                loadingScreen.classList.remove('hidden');
+                startScreen.classList.add('hidden');
+                tournamentContainer.classList.add('hidden');
+                winnerDisplay.innerHTML = '';
+                aiCategoryPromptInput.value = '';
+                generateFeedback.classList.add('hidden');
+                generateSpinner.classList.add('hidden');
+                
+                // Set a timeout to ensure the start screen eventually appears,
+                // even if Firebase loading encounters an unexpected halt.
+                // This is a fallback for debugging.
+                setTimeout(() => {
+                    if (loadingScreen.classList.contains('hidden')) {
+                        // Already loaded by Firebase, do nothing.
                     } else {
-                        selectElement.innerHTML = '<option value="">Nessuna categoria disponibile</option>';
-                        startButton.disabled = true;
-                        startButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        createRoomButton.disabled = true;
-                        createRoomButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        console.warn("Firebase loading timeout: Showing start screen without full data confirmation.");
+                        loadingScreen.classList.add('hidden');
+                        startScreen.classList.remove('hidden');
+                        updateCategorySelect(); // Attempt to update with whatever data is available
                     }
-                });
-                validateTournamentSize(categorySelect, sizeWarning, startTournamentButton, 'solo');
-                validateTournamentSize(quizCategorySelect, quizSizeWarning, createRoomButton, 'quiz');
+                }, 5000); // 5 seconds timeout
             }
 
-            // --- GEMINI AI INTEGRATION ---
+            // --- Firebase Authentication and Data Loading ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = `ID Utente: ${currentUserId}`;
+                    console.log("Authenticated as:", currentUserId);
+
+                    const categoriesColRef = collection(db, `artifacts/${appId}/users/${currentUserId}/categories`);
+                    let initialSnapshotLoaded = false; // Flag to track if initial snapshot has completed
+
+                    onSnapshot(categoriesColRef, (snapshot) => {
+                        console.log("Firestore snapshot received.");
+                        snapshot.docChanges().forEach(change => {
+                            const categoryName = change.doc.id;
+                            const categoryData = change.doc.data();
+                            if (change.type === "added" || change.type === "modified") {
+                                dishData[categoryName] = categoryData.items;
+                                console.log(`Category ${categoryName} loaded/updated.`);
+                            } else if (change.type === "removed") {
+                                delete dishData[categoryName];
+                                console.log(`Category ${categoryName} removed.`);
+                            }
+                        });
+                        updateCategorySelect();
+                        
+                        // Hide loading screen and show start screen only after the first snapshot
+                        if (!initialSnapshotLoaded) {
+                            loadingScreen.classList.add('hidden');
+                            startScreen.classList.remove('hidden');
+                            initialSnapshotLoaded = true;
+                            console.log("Initial categories loaded, showing start screen.");
+                        }
+                    }, (error) => {
+                        console.error("Error listening to categories:", error);
+                        loadingScreen.innerHTML = `<p class="text-red-500">Errore nel caricamento delle categorie: ${error.message}</p>`;
+                        // Ensure UI is unblocked even on error
+                        if (!initialSnapshotLoaded) {
+                            loadingScreen.classList.add('hidden');
+                            startScreen.classList.remove('hidden');
+                            initialSnapshotLoaded = true;
+                            console.log("Error loading categories, showing start screen with fallback.");
+                        }
+                    });
+
+                } else {
+                    console.log("No user authenticated, attempting anonymous sign-in.");
+                    try {
+                        if (window.__initial_auth_token) {
+                            await signInWithCustomToken(auth, window.__initial_auth_token);
+                            console.log("Signed in with custom token.");
+                        } else {
+                            await signInAnonymously(auth);
+                            console.log("Signed in anonymously.");
+                        }
+                        // onAuthStateChanged will be re-triggered with the user object
+                    } catch (error) {
+                        console.error("Error signing in:", error);
+                        loadingScreen.innerHTML = `<p class="text-red-500">Errore di autenticazione: ${error.message}</p>`;
+                        // Ensure UI is unblocked even on auth error
+                        loadingScreen.classList.add('hidden');
+                        startScreen.classList.remove('hidden');
+                        updateCategorySelect(); // Try to update categories with built-in ones
+                    }
+                }
+            });
+
+            // --- Event Listeners ---
+            startButton.addEventListener('click', function() {
+                const selectedCategory = categorySelect.value;
+                const selectedSize = parseInt(sizeSelect.value);
+                
+                if (selectedSize > dishData[selectedCategory].length) {
+                    console.error("Not enough items for the selected tournament size in this category.");
+                    return;
+                }
+
+                startScreen.classList.add('hidden');
+                tournamentContainer.classList.remove('hidden');
+                createTournament(dishData[selectedCategory], selectedSize);
+            });
+
+            resetButton.addEventListener('click', initApp);
+            categorySelect.addEventListener('change', validateTournamentSize);
+            sizeSelect.addEventListener('change', validateTournamentSize);
+
+            // --- Gemini AI List Generation ---
             generateListButton.addEventListener('click', async function() {
                 const aiCategoryPrompt = aiCategoryPromptInput.value.trim();
                 if (!aiCategoryPrompt) {
@@ -878,7 +730,7 @@
                             }
                         }
                     };
-                    const apiKey = "";
+                    const apiKey = ""; // Canvas will provide this
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                     
                     const response = await fetch(apiUrl, {
@@ -896,15 +748,13 @@
 
                         if (generatedItems && Array.isArray(generatedItems) && generatedItems.length > 0) {
                             const newCategoryName = `generati_${aiCategoryPrompt.replace(/\s+/g, '_').toLowerCase()}`;
-                            await saveCategoryItemsToFirestore(newCategoryName, generatedItems);
+                            await saveCategoryItemsToFirestore(newCategoryName, generatedItems); // Pass array directly
                             
                             generateFeedback.textContent = `Lista di "${aiCategoryPrompt}" generata e aggiunta come categoria "${newCategoryName}"!`;
                             generateFeedback.className = "text-sm mt-2 text-green-600";
-                            aiCategoryPromptInput.value = '';
-                            categorySelect.value = newCategoryName;
-                            quizCategorySelect.value = newCategoryName; // Also update quiz category select
-                            validateTournamentSize(categorySelect, sizeWarning, startTournamentButton, 'solo');
-                            validateTournamentSize(quizCategorySelect, quizSizeWarning, createRoomButton, 'quiz');
+                            aiCategoryPromptInput.value = ''; // Clear input
+                            categorySelect.value = newCategoryName; // Select the new category
+                            validateTournamentSize();
                         } else {
                             generateFeedback.textContent = "L'AI non ha generato una lista valida. Riprova con un prompt diverso.";
                             generateFeedback.className = "text-sm mt-2 text-orange-500";
@@ -926,723 +776,7 @@
                 }
             });
 
-            async function generateQuizQuestion(item) {
-                try {
-                    const prompt = `Genera una domanda a risposta multipla con 4 opzioni (A, B, C, D) e la risposta corretta su "${item}". La domanda deve essere interessante e le opzioni plausibili. Rispondi in formato JSON con le seguenti chiavi: "question" (stringa), "options" (array di 4 stringhe), "correctAnswer" (stringa, il testo della risposta corretta). Non aggiungere altro testo o formattazione oltre al JSON.`;
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                    const payload = {
-                        contents: chatHistory,
-                        generationConfig: {
-                            responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    "question": { "type": "STRING" },
-                                    "options": { "type": "ARRAY", "items": { "type": "STRING" } },
-                                    "correctAnswer": { "type": "STRING" }
-                                },
-                                propertyOrdering: ["question", "options", "correctAnswer"]
-                            }
-                        }
-                    };
-                    const apiKey = "";
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                    
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await response.json();
-
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        const jsonString = result.candidates[0].content.parts[0].text;
-                        const questionData = JSON.parse(jsonString);
-                        
-                        // Basic validation of the generated question structure
-                        if (questionData.question && Array.isArray(questionData.options) && questionData.options.length === 4 && questionData.correctAnswer) {
-                            return questionData;
-                        } else {
-                            console.warn("Generated question has invalid structure:", questionData);
-                            return null;
-                        }
-                    } else {
-                        console.error("Gemini API response structure unexpected for question generation:", result);
-                        return null;
-                    }
-                } catch (error) {
-                    console.error("Error calling Gemini API for question generation:", error);
-                    return null;
-                }
-            }
-
-
-            // --- MULTIPLAYER QUIZ LOGIC ---
-            async function createRoom() {
-                const nickname = playerNicknameInput.value.trim();
-                if (!nickname) {
-                    roomFeedback.textContent = "Inserisci un nickname per creare una stanza.";
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    return;
-                }
-                currentUserName = nickname;
-                localStorage.setItem('playerNickname', nickname); // Persist nickname
-
-                const category = quizCategorySelect.value;
-                const numQuestions = parseInt(quizSizeSelect.value);
-                const availableItems = dishData[category];
-
-                if (numQuestions * 2 > availableItems.length) { // Need at least 2 items per question for options
-                    roomFeedback.textContent = "Non ci sono abbastanza elementi nella categoria per generare il numero di domande richiesto.";
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    return;
-                }
-
-                roomSpinner.classList.remove('hidden');
-                roomFeedback.classList.add('hidden');
-                createRoomButton.disabled = true;
-                joinRoomButton.disabled = true;
-
-                try {
-                    const roomId = generateRoomId();
-                    currentRoomId = roomId;
-                    // Corrected Firestore path: using collection for nested path segments
-                    const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), roomId);
-
-                    // Generate questions for the quiz
-                    const selectedItems = shuffle([...availableItems]).slice(0, numQuestions);
-                    const generatedQuestions = [];
-                    for (const item of selectedItems) {
-                        const question = await generateQuizQuestion(item);
-                        if (question) {
-                            generatedQuestions.push(question);
-                        } else {
-                            console.warn(`Failed to generate question for item: ${item}`);
-                        }
-                    }
-
-                    if (generatedQuestions.length === 0) {
-                        roomFeedback.textContent = "Impossibile generare domande per la categoria selezionata. Riprova.";
-                        roomFeedback.className = "text-sm mt-2 text-red-500";
-                        roomFeedback.classList.remove('hidden');
-                        return;
-                    }
-
-                    await setDoc(roomRef, {
-                        hostId: currentUserId,
-                        category: category,
-                        numQuestions: generatedQuestions.length,
-                        players: {
-                            [currentUserId]: { name: currentUserName, score: 0, lastAnswer: null, answered: false }
-                        },
-                        state: "lobby", // lobby, question, answering, revealing, finished
-                        currentQuestionIndex: 0,
-                        currentQuestion: null,
-                        questionStartTime: null,
-                        questionEndTime: null,
-                        questions: generatedQuestions, // Store all questions
-                        createdAt: serverTimestamp()
-                    });
-
-                    console.log("Room created:", roomId);
-                    setupRoomListener(roomId);
-                    showScreen('quiz-lobby-screen');
-                    lobbyRoomIdDisplay.textContent = roomId;
-
-                } catch (error) {
-                    roomFeedback.textContent = `Errore nella creazione della stanza: ${error.message}`;
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    console.error("Error creating room:", error);
-                } finally {
-                    roomSpinner.classList.add('hidden');
-                    createRoomButton.disabled = false;
-                    joinRoomButton.disabled = false;
-                }
-            }
-
-            async function joinRoom() {
-                const nickname = playerNicknameInput.value.trim();
-                if (!nickname) {
-                    roomFeedback.textContent = "Inserisci un nickname per unirti a una stanza.";
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    return;
-                }
-                currentUserName = nickname;
-                localStorage.setItem('playerNickname', nickname); // Persist nickname
-
-                const roomId = roomIdInput.value.trim().toUpperCase();
-                if (!roomId) {
-                    roomFeedback.textContent = "Inserisci l'ID della stanza.";
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    return;
-                }
-
-                roomSpinner.classList.remove('hidden');
-                roomFeedback.classList.add('hidden');
-                createRoomButton.disabled = true;
-                joinRoomButton.disabled = true;
-
-                try {
-                    // Corrected Firestore path: using collection for nested path segments
-                    const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), roomId);
-                    const roomSnap = await getDoc(roomRef);
-
-                    if (!roomSnap.exists()) {
-                        roomFeedback.textContent = "Stanza non trovata. Controlla l'ID.";
-                        roomFeedback.className = "text-sm mt-2 text-red-500";
-                        roomFeedback.classList.remove('hidden');
-                        return;
-                    }
-
-                    currentRoomId = roomId;
-                    await updateDoc(roomRef, {
-                        [`players.${currentUserId}`]: { name: currentUserName, score: 0, lastAnswer: null, answered: false }
-                    });
-
-                    console.log("Joined room:", roomId);
-                    setupRoomListener(roomId);
-                    showScreen('quiz-lobby-screen');
-                    lobbyRoomIdDisplay.textContent = roomId;
-
-                } catch (error) {
-                    roomFeedback.textContent = `Errore nell'unione alla stanza: ${error.message}`;
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                    console.error("Error joining room:", error);
-                } finally {
-                    roomSpinner.classList.add('hidden');
-                    createRoomButton.disabled = false;
-                    joinRoomButton.disabled = false;
-                }
-            }
-
-            async function leaveRoom() {
-                if (currentRoomId && currentUserId) {
-                    try {
-                        if (unsubscribeRoomListener) {
-                            unsubscribeRoomListener(); // Stop listening to room updates
-                            unsubscribeRoomListener = null;
-                        }
-
-                        // Corrected Firestore path: using collection for nested path segments
-                        const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId);
-                        const roomSnap = await getDoc(roomRef);
-                        
-                        if (roomSnap.exists()) {
-                            const roomData = roomSnap.data();
-                            if (roomData.hostId === currentUserId) {
-                                // If host leaves, delete the room
-                                await deleteDoc(roomRef);
-                                console.log("Host left, room deleted.");
-                            } else {
-                                // If player leaves, remove them from players list
-                                await updateDoc(roomRef, {
-                                    [`players.${currentUserId}`]: firebase.deleteField()
-                                });
-                                console.log("Player left the room.");
-                            }
-                        }
-                    } catch (error) {
-                        console.error("Error leaving room:", error);
-                    } finally {
-                        currentRoomId = null;
-                        initApp(); // Go back to main menu
-                    }
-                } else {
-                    initApp(); // Just go back to main menu if no room is active
-                }
-            }
-
-            function setupRoomListener(roomId) {
-                if (unsubscribeRoomListener) {
-                    unsubscribeRoomListener(); // Unsubscribe from previous listener if any
-                }
-
-                // Corrected Firestore path: using collection for nested path segments
-                const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), roomId);
-                unsubscribeRoomListener = onSnapshot(roomRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const roomData = docSnap.data();
-                        console.log("Room data updated:", roomData);
-                        updateLobbyUI(roomData);
-                        handleGameState(roomData);
-                    } else {
-                        console.log("Room no longer exists. Returning to main menu.");
-                        roomFeedback.textContent = "La stanza non esiste più o è stata chiusa dall'host.";
-                        roomFeedback.className = "text-sm mt-2 text-red-500";
-                        roomFeedback.classList.remove('hidden');
-                        leaveRoom(); // Automatically leave if room is deleted
-                    }
-                }, (error) => {
-                    console.error("Error listening to room:", error);
-                    roomFeedback.textContent = `Errore di connessione alla stanza: ${error.message}`;
-                    roomFeedback.className = "text-sm mt-2 text-red-500";
-                    roomFeedback.classList.remove('hidden');
-                });
-            }
-
-            function updateLobbyUI(roomData) {
-                if (mainMenuScreen.classList.contains('hidden')) { // Only update if not on main menu
-                    lobbyRoomIdDisplay.textContent = currentRoomId;
-                    playersList.innerHTML = '';
-                    const players = Object.values(roomData.players || {});
-                    players.forEach(player => {
-                        const li = document.createElement('li');
-                        li.textContent = player.name;
-                        if (player.name === currentUserName) { // Highlight current player
-                            li.classList.add('font-bold', 'text-blue-600');
-                        }
-                        playersList.appendChild(li);
-                    });
-
-                    if (roomData.hostId === currentUserId) {
-                        startQuizButton.classList.remove('hidden');
-                        startQuizButton.disabled = players.length < 2; // Enable if at least 2 players
-                        if (players.length < 2) {
-                            lobbyFeedback.textContent = "Attendi almeno 2 giocatori per iniziare.";
-                            lobbyFeedback.className = "text-sm mt-2 text-orange-500";
-                            lobbyFeedback.classList.remove('hidden');
-                        } else {
-                            lobbyFeedback.classList.add('hidden');
-                        }
-                    } else {
-                        startQuizButton.classList.add('hidden');
-                        lobbyFeedback.textContent = "In attesa che l'host avvii il quiz...";
-                        lobbyFeedback.className = "text-sm mt-2 text-gray-600";
-                        lobbyFeedback.classList.remove('hidden');
-                    }
-                }
-            }
-
-            async function startGame() {
-                if (currentRoomId && currentUserId) {
-                    // Corrected Firestore path: using collection for nested path segments
-                    const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId);
-                    const roomSnap = await getDoc(roomRef);
-                    if (!roomSnap.exists()) {
-                        console.error("Room does not exist when trying to start game.");
-                        return;
-                    }
-                    if (roomSnap.data().hostId !== currentUserId) {
-                        console.error("Only host can start the game.");
-                        return;
-                    }
-
-                    const roomData = roomSnap.data();
-                    if (Object.keys(roomData.players).length < 2) {
-                        lobbyFeedback.textContent = "Non puoi iniziare senza almeno 2 giocatori.";
-                        lobbyFeedback.className = "text-sm mt-2 text-red-500";
-                        lobbyFeedback.classList.remove('hidden');
-                        return;
-                    }
-
-                    // Reset player scores for a new game
-                    let updatedPlayers = {};
-                    for (const playerId in roomData.players) {
-                        updatedPlayers[playerId] = { ...roomData.players[playerId], score: 0, lastAnswer: null, answered: false };
-                    }
-
-                    await updateDoc(roomRef, {
-                        state: "question",
-                        currentQuestionIndex: 0,
-                        currentQuestion: roomData.questions[0],
-                        questionStartTime: serverTimestamp(),
-                        questionEndTime: null, // Will be set when question is revealed
-                        players: updatedPlayers
-                    });
-                    console.log("Game started by host.");
-                }
-            }
-
-            async function handleGameState(roomData) {
-                const isHost = roomData.hostId === currentUserId;
-
-                if (roomData.state === "lobby") {
-                    showScreen('quiz-lobby-screen');
-                    updateLobbyUI(roomData);
-                    clearInterval(questionTimerInterval);
-                } else if (roomData.state === "question") {
-                    showScreen('quiz-game-screen');
-                    displayQuestion(roomData);
-                    startQuestionTimer(roomData);
-                    answerFeedbackDisplay.classList.add('hidden');
-                    quizSpinner.classList.add('hidden');
-                    nextQuestionButton.classList.add('hidden');
-                    endQuizButton.classList.add('hidden');
-                } else if (roomData.state === "revealing") {
-                    displayQuestion(roomData); // Re-display to show correct/incorrect
-                    revealAnswer(roomData);
-                    clearInterval(questionTimerInterval);
-                    if (isHost) {
-                        nextQuestionButton.classList.remove('hidden');
-                        endQuizButton.classList.remove('hidden');
-                    }
-                } else if (roomData.state === "finished") {
-                    showScreen('quiz-results-screen');
-                    displayFinalScores(roomData);
-                    clearInterval(questionTimerInterval);
-                }
-                updateQuizScoresUI(roomData);
-            }
-
-            function displayQuestion(roomData) {
-                const currentQuestion = roomData.currentQuestion;
-                const playerState = roomData.players[currentUserId];
-
-                currentQuestionNumberDisplay.textContent = roomData.currentQuestionIndex + 1;
-                totalQuestionsDisplay.textContent = roomData.numQuestions;
-                questionTextDisplay.textContent = currentQuestion.question;
-                questionOptionsContainer.innerHTML = '';
-
-                shuffle([...currentQuestion.options]).forEach(option => {
-                    const button = document.createElement('button');
-                    button.textContent = option;
-                    button.classList.add('hover:scale-105', 'transform', 'transition-transform');
-                    button.addEventListener('click', () => submitAnswer(option));
-
-                    // Disable buttons if already answered or game state is revealing/finished
-                    if (roomData.state === "revealing" || roomData.state === "finished" || playerState.answered) {
-                        button.disabled = true;
-                    }
-
-                    // Apply styles if answer is revealed
-                    if (roomData.state === "revealing") {
-                        if (option === currentQuestion.correctAnswer) {
-                            button.classList.add('correct');
-                        } else if (playerState.lastAnswer === option && playerState.lastAnswer !== currentQuestion.correctAnswer) {
-                            button.classList.add('incorrect');
-                        }
-                    }
-                    // Highlight selected answer if already answered
-                    if (playerState.lastAnswer === option && roomData.state !== "revealing") {
-                        button.classList.add('selected');
-                    }
-
-                    questionOptionsContainer.appendChild(button);
-                });
-            }
-
-            function startQuestionTimer(roomData) {
-                clearInterval(questionTimerInterval); // Clear any existing timer
-                timerBar.style.width = '100%';
-                timerBar.style.backgroundColor = '#4CAF50';
-
-                const startTime = roomData.questionStartTime ? roomData.questionStartTime.toDate().getTime() : Date.now();
-                const endTime = startTime + (QUESTION_TIME_LIMIT * 1000);
-
-                questionTimerInterval = setInterval(() => {
-                    const now = Date.now();
-                    const timeLeft = endTime - now;
-
-                    if (timeLeft <= 0) {
-                        clearInterval(questionTimerInterval);
-                        if (roomData.hostId === currentUserId && roomData.state === "question") {
-                            // Host automatically reveals answer if time runs out
-                            updateDoc(doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId), {
-                                state: "revealing",
-                                questionEndTime: serverTimestamp()
-                            });
-                        }
-                    } else {
-                        const progress = (timeLeft / (QUESTION_TIME_LIMIT * 1000)) * 100;
-                        timerBar.style.width = `${progress}%`;
-                        if (progress < 25) {
-                            timerBar.style.backgroundColor = '#f44336'; // Red
-                        } else if (progress < 50) {
-                            timerBar.style.backgroundColor = '#ff9800'; // Orange
-                        } else {
-                            timerBar.style.backgroundColor = '#4CAF50'; // Green
-                        }
-                    }
-                }, 100); // Update every 100ms
-            }
-
-            async function submitAnswer(selectedOption) {
-                if (!currentRoomId || !currentUserId) return;
-
-                // Corrected Firestore path: using collection for nested path segments
-                const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId);
-                const roomSnap = await getDoc(roomRef);
-                if (!roomSnap.exists()) return;
-
-                const roomData = roomSnap.data();
-                const playerState = roomData.players[currentUserId];
-
-                if (roomData.state !== "question" || playerState.answered) {
-                    return; // Can only answer if in 'question' state and not already answered
-                }
-
-                // Mark player as answered and store their answer
-                await updateDoc(roomRef, {
-                    [`players.${currentUserId}.lastAnswer`]: selectedOption,
-                    [`players.${currentUserId}.answered`]: true
-                });
-
-                // Visually mark the selected option
-                Array.from(questionOptionsContainer.children).forEach(button => {
-                    if (button.textContent === selectedOption) {
-                        button.classList.add('selected');
-                    }
-                    button.disabled = true; // Disable all options after answering
-                });
-
-                answerFeedbackDisplay.textContent = "Risposta inviata!";
-                answerFeedbackDisplay.className = "text-sm mt-2 text-green-600";
-                answerFeedbackDisplay.classList.remove('hidden');
-
-                // Check if all players have answered (only host does this check)
-                if (roomData.hostId === currentUserId) {
-                    const allPlayersAnswered = Object.values(roomData.players).every(p => p.answered);
-                    if (allPlayersAnswered) {
-                        clearInterval(questionTimerInterval); // Stop timer
-                        await updateDoc(roomRef, {
-                            state: "revealing",
-                            questionEndTime: serverTimestamp()
-                        });
-                    }
-                }
-            }
-
-            async function revealAnswer(roomData) {
-                const currentQuestion = roomData.currentQuestion;
-                const players = roomData.players;
-                const isHost = roomData.hostId === currentUserId;
-
-                // Update UI for correct/incorrect answers
-                Array.from(questionOptionsContainer.children).forEach(button => {
-                    button.disabled = true; // Ensure all buttons are disabled
-                    if (button.textContent === currentQuestion.correctAnswer) {
-                        button.classList.add('correct');
-                    } else if (button.classList.contains('selected')) {
-                        button.classList.add('incorrect');
-                    }
-                });
-
-                // Update scores (only host should do this to prevent race conditions)
-                if (isHost && roomData.state === "revealing") {
-                    let updatedPlayers = { ...players };
-                    for (const playerId in updatedPlayers) {
-                        const player = updatedPlayers[playerId];
-                        // Only award points if they answered correctly and haven't already been scored for this question
-                        if (player.lastAnswer === currentQuestion.correctAnswer && !player.scoredForCurrentQuestion) {
-                            updatedPlayers[playerId].score += 10; // Award points
-                            updatedPlayers[playerId].scoredForCurrentQuestion = true; // Mark as scored
-                        }
-                    }
-                    // Corrected Firestore path: using collection for nested path segments
-                    await updateDoc(doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId), {
-                        players: updatedPlayers
-                    });
-                }
-                answerFeedbackDisplay.classList.add('hidden'); // Hide "Answer submitted" feedback
-            }
-
-            function updateQuizScoresUI(roomData) {
-                quizPlayersScoresList.innerHTML = '';
-                const playersArray = Object.values(roomData.players || {}).sort((a, b) => b.score - a.score); // Sort by score
-
-                playersArray.forEach(player => {
-                    const li = document.createElement('li');
-                    li.classList.add('player-score-item');
-                    if (player.name === currentUserName) {
-                        li.classList.add('current-player');
-                    }
-                    li.innerHTML = `<span class="player-name">${player.name}</span><span class="player-score">${player.score}</span>`;
-                    quizPlayersScoresList.appendChild(li);
-                });
-            }
-
-            async function nextQuestion() {
-                // Corrected Firestore path: using collection for nested path segments
-                if (!currentRoomId || currentUserId !== (await getDoc(doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId))).data().hostId) {
-                    return; // Only host can advance
-                }
-
-                // Corrected Firestore path: using collection for nested path segments
-                const roomRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'quiz_rooms'), currentRoomId);
-                const roomSnap = await getDoc(roomRef);
-                if (!roomSnap.exists()) return;
-                const roomData = roomSnap.data();
-
-                const nextIndex = roomData.currentQuestionIndex + 1;
-
-                if (nextIndex < roomData.numQuestions) {
-                    // Reset answered state for all players for the next question
-                    let updatedPlayers = {};
-                    for (const playerId in roomData.players) {
-                        updatedPlayers[playerId] = { ...roomData.players[playerId], lastAnswer: null, answered: false, scoredForCurrentQuestion: false };
-                    }
-
-                    await updateDoc(roomRef, {
-                        state: "question",
-                        currentQuestionIndex: nextIndex,
-                        currentQuestion: roomData.questions[nextIndex],
-                        questionStartTime: serverTimestamp(),
-                        questionEndTime: null,
-                        players: updatedPlayers
-                    });
-                } else {
-                    // End of quiz
-                    await updateDoc(roomRef, {
-                        state: "finished",
-                        questionEndTime: serverTimestamp()
-                    });
-                }
-            }
-
-            function displayFinalScores(roomData) {
-                finalScoresList.innerHTML = '';
-                const playersArray = Object.values(roomData.players || {}).sort((a, b) => b.score - a.score);
-
-                playersArray.forEach((player, index) => {
-                    const li = document.createElement('li');
-                    li.classList.add('flex', 'justify-between', 'items-center', 'py-2', 'px-4', 'border-b', 'border-gray-200');
-                    if (index === 0) { // Highlight winner
-                        li.classList.add('bg-yellow-100', 'font-bold', 'text-yellow-800', 'rounded-t-lg');
-                        li.innerHTML = `<span>🏆 ${player.name}</span><span>${player.score} punti</span>`;
-                    } else {
-                        li.innerHTML = `<span>${index + 1}. ${player.name}</span><span>${player.score} punti</span>`;
-                    }
-                    finalScoresList.appendChild(li);
-                });
-            }
-
             // --- INITIALIZATION ---
-            function initApp() {
-                showScreen('loading-screen'); // Start with loading screen
-                // Clear all dynamic content
-                bracket.innerHTML = '';
-                winnerDisplay.innerHTML = '';
-                aiCategoryPromptInput.value = '';
-                generateFeedback.classList.add('hidden');
-                generateSpinner.classList.add('hidden');
-                roomFeedback.classList.add('hidden');
-                roomSpinner.classList.add('hidden');
-                lobbyFeedback.classList.add('hidden');
-                lobbySpinner.classList.add('hidden');
-                answerFeedbackDisplay.classList.add('hidden');
-                quizSpinner.classList.add('hidden');
-                playerNicknameInput.value = localStorage.getItem('playerNickname') || ''; // Load nickname from local storage
-                roomIdInput.value = '';
-                clearInterval(questionTimerInterval);
-                timerBar.style.width = '100%';
-                timerBar.style.backgroundColor = '#4CAF50';
-                
-                // Set a timeout to ensure the main menu eventually appears,
-                // even if Firebase loading encounters an unexpected halt.
-                setTimeout(() => {
-                    if (loadingScreen.classList.contains('hidden')) {
-                        // Already loaded by Firebase, do nothing.
-                    } else {
-                        console.warn("Firebase loading timeout: Showing main menu without full data confirmation.");
-                        showScreen('main-menu-screen');
-                        updateCategorySelects(); // Attempt to update with whatever data is available
-                    }
-                }, 5000); // 5 seconds timeout
-            }
-
-            // --- Firebase Authentication and Data Loading ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUserId = user.uid;
-                    userIdDisplay.textContent = `ID Utente: ${currentUserId}`;
-                    console.log("Authenticated as:", currentUserId);
-
-                    const categoriesColRef = collection(db, `artifacts/${appId}/users/${currentUserId}/categories`);
-                    let initialSnapshotLoaded = false;
-
-                    onSnapshot(categoriesColRef, (snapshot) => {
-                        console.log("Firestore snapshot received for categories.");
-                        snapshot.docChanges().forEach(change => {
-                            const categoryName = change.doc.id;
-                            const categoryData = change.doc.data();
-                            if (change.type === "added" || change.type === "modified") {
-                                dishData[categoryName] = categoryData.items;
-                                console.log(`Category ${categoryName} loaded/updated.`);
-                            } else if (change.type === "removed") {
-                                delete dishData[categoryName];
-                                console.log(`Category ${categoryName} removed.`);
-                            }
-                        });
-                        updateCategorySelects();
-                        
-                        if (!initialSnapshotLoaded) {
-                            showScreen('main-menu-screen'); // Show main menu after initial categories load
-                            initialSnapshotLoaded = true;
-                            console.log("Initial categories loaded, showing main menu.");
-                        }
-                    }, (error) => {
-                        console.error("Error listening to categories:", error);
-                        loadingScreen.innerHTML = `<p class="text-red-500">Errore nel caricamento delle categorie: ${error.message}</p>`;
-                        if (!initialSnapshotLoaded) {
-                            showScreen('main-menu-screen');
-                            initialSnapshotLoaded = true;
-                            console.log("Error loading categories, showing main menu with fallback.");
-                        }
-                    });
-
-                } else {
-                    console.log("No user authenticated, attempting anonymous sign-in.");
-                    try {
-                        if (window.__initial_auth_token) {
-                            await signInWithCustomToken(auth, window.__initial_auth_token);
-                            console.log("Signed in with custom token.");
-                        } else {
-                            await signInAnonymously(auth);
-                            console.log("Signed in anonymously.");
-                        }
-                    } catch (error) {
-                        console.error("Error signing in:", error);
-                        loadingScreen.innerHTML = `<p class="text-red-500">Errore di autenticazione: ${error.message}</p>`;
-                        showScreen('main-menu-screen');
-                        updateCategorySelects();
-                    }
-                }
-            });
-
-            // --- Event Listeners ---
-            startSoloTournamentButton.addEventListener('click', () => showScreen('solo-start-screen'));
-            startMultiplayerQuizButton.addEventListener('click', () => showScreen('multiplayer-setup-screen'));
-            backToMainMenuButton.addEventListener('click', initApp);
-            resetSoloButton.addEventListener('click', initApp);
-            playAgainButton.addEventListener('click', initApp);
-            returnToMainMenuQuizEndButton.addEventListener('click', initApp);
-
-
-            startTournamentButton.addEventListener('click', function() {
-                const selectedCategory = categorySelect.value;
-                const selectedSize = parseInt(sizeSelect.value);
-                
-                if (selectedSize > dishData[selectedCategory].length) {
-                    console.error("Not enough items for the selected tournament size in this category.");
-                    return;
-                }
-
-                showScreen('solo-tournament-container');
-                createSoloTournament(dishData[selectedCategory], selectedSize);
-            });
-
-            categorySelect.addEventListener('change', () => validateTournamentSize(categorySelect, sizeWarning, startTournamentButton, 'solo'));
-            sizeSelect.addEventListener('change', () => validateTournamentSize(categorySelect, sizeWarning, startTournamentButton, 'solo'));
-            quizCategorySelect.addEventListener('change', () => validateTournamentSize(quizCategorySelect, quizSizeWarning, createRoomButton, 'quiz'));
-            quizSizeSelect.addEventListener('change', () => validateTournamentSize(quizCategorySelect, quizSizeWarning, createRoomButton, 'quiz'));
-
-            createRoomButton.addEventListener('click', createRoom);
-            joinRoomButton.addEventListener('click', joinRoom);
-            leaveRoomButton.addEventListener('click', leaveRoom);
-            startQuizButton.addEventListener('click', startGame);
-            nextQuestionButton.addEventListener('click', nextQuestion);
-            endQuizButton.addEventListener('click', leaveRoom); // End quiz button also leaves the room
-
-            // --- INITIALIZATION CALL ---
             initApp();
         });
     </script>
