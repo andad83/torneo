@@ -8,6 +8,37 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, query, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase (will be populated by Canvas environment)
+        window.__app_id = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        window.__firebase_config = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        window.__initial_auth_token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        window.firebaseApp = initializeApp(window.__firebase_config);
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+
+        // Exporting for use in main script block
+        window.firebase = {
+            auth: window.auth,
+            db: window.db,
+            signInAnonymously: signInAnonymously,
+            signInWithCustomToken: signInWithCustomToken,
+            onAuthStateChanged: onAuthStateChanged,
+            setDoc: setDoc,
+            collection: collection,
+            query: query,
+            onSnapshot: onSnapshot,
+            doc: doc,
+            deleteDoc: deleteDoc
+        };
+    </script>
+
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
@@ -29,13 +60,15 @@
             display: flex;
             flex-direction: column;
             justify-content: space-around;
-            min-width: 200px; /* Adjusted min-width for responsiveness */
-            width: 250px; /* Default width for larger screens */
-            margin: 0 10px; /* Reduced margin for mobile */
+            min-width: 180px; /* Adjusted min-width for responsiveness */
+            width: 220px; /* Default width for larger screens */
+            margin: 0 8px; /* Reduced margin for mobile */
         }
 
         @media (min-width: 768px) { /* Medium screens and up */
             .round {
+                min-width: 250px;
+                width: 250px;
                 margin: 0 20px;
             }
         }
@@ -45,7 +78,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            margin: 15px 0; /* Adjusted margin */
+            margin: 12px 0; /* Adjusted margin */
             flex-grow: 1;
         }
         .match-pair {
@@ -55,18 +88,18 @@
              background-color: #fff;
              border-radius: 8px;
              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-             padding: 8px; /* Reduced padding */
-             min-height: 80px; /* Reduced min-height */
+             padding: 6px; /* Reduced padding */
+             min-height: 70px; /* Reduced min-height */
         }
         .competitor {
-            padding: 8px; /* Reduced padding */
+            padding: 6px; /* Reduced padding */
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 1px solid #e0e0e0;
-            margin: 3px 0; /* Reduced margin */
+            margin: 2px 0; /* Reduced margin */
             text-transform: capitalize;
-            font-size: 0.9rem; /* Adjusted font size */
+            font-size: 0.85rem; /* Adjusted font size */
         }
         @media (min-width: 768px) {
             .competitor {
@@ -106,7 +139,7 @@
             color: #d32f2f;
             font-family: 'Lora', serif;
             margin: 2px 0;
-            font-size: 0.8rem; /* Adjusted font size */
+            font-size: 0.75rem; /* Adjusted font size */
         }
         @media (min-width: 768px) {
             .vs-separator {
@@ -115,15 +148,15 @@
         }
         .match-connector {
             position: absolute;
-            right: -20px; /* Adjusted for smaller margins */
+            right: -15px; /* Adjusted for smaller margins */
             top: 50%;
-            width: 20px; /* Adjusted width */
+            width: 15px; /* Adjusted width */
             height: 2px;
             background-color: #bdbdbd;
         }
         .round-connector {
             position: absolute;
-            right: -30px; /* Adjusted for smaller margins */
+            right: -23px; /* Adjusted for smaller margins */
             width: 2px;
             background-color: #bdbdbd;
         }
@@ -138,6 +171,20 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -146,10 +193,17 @@
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold title-font text-red-800">Torneo dei Piatti Italiani</h1>
             <p class="text-lg text-gray-600 mt-2">Scegli il tuo piatto preferito in ogni scontro per incoronare il campione!</p>
+            <p class="text-sm text-gray-500 mt-1" id="user-id-display"></p>
         </header>
 
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
+            <div class="spinner mb-4"></div>
+            <p class="text-xl text-gray-700">Caricamento categorie...</p>
+        </div>
+
         <!-- Start Screen -->
-        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg">
+        <div id="start-screen" class="flex flex-col items-center justify-center min-h-[400px] bg-white p-8 rounded-lg shadow-lg hidden">
             <h2 class="text-3xl font-bold title-font text-red-700 mb-6">Configura il tuo Torneo</h2>
             
             <div class="mb-6 w-full max-w-sm">
@@ -207,9 +261,18 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        // Ensure Firebase is loaded before running main script
+        window.addEventListener('load', async () => {
+            if (typeof window.firebase === 'undefined') {
+                console.error("Firebase SDK not loaded. Please ensure the module script runs correctly.");
+                document.getElementById('loading-screen').innerHTML = '<p class="text-red-500">Errore: Firebase non caricato. Ricarica la pagina.</p>';
+                return;
+            }
+
+            const { auth, db, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setDoc, collection, query, onSnapshot, doc } = window.firebase;
+
             // --- DATA ---
-            // Dati iniziali estratti e puliti dai file CSV forniti dall'utente.
+            // Initial built-in data
             let dishData = {
                 primi: [
                     "tagliatelle al ragu", "pasta e fagioli", "ravioli ricotta e spinaci", "riso patate e cozze",
@@ -308,13 +371,14 @@
                     "Giuseppe Trombatore", "Immacolata Veloce", "demetrio cutrupi", "viola di domenicantonio",
                     "adriana degli effetti luciani", "gasparino facchinetti forlani", "Fiona Cacalli",
                     "Derek Vassallo", "Fabrizio Frinolli Puzzilli", "Antonangelo Casula", "Placido Recupero",
-                    "Luca Sederino", "Pasqualino Fattaccio", "Letterio Grillo", "Berardino Tarallo", "V" // 'V' is likely an incomplete entry, but included for completeness based on snippet.
-                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d && d !== 'v') // Clean quotes and filter out single 'v'
+                    "Luca Sederino", "Pasqualino Fattaccio", "Letterio Grillo", "Berardino Tarallo", "V"
+                ].map(d => d.toLowerCase().trim().replace(/"/g, '')).filter(d => d && d !== 'v')
             };
             
             const roundTitles = ["Ottavi di Finale", "Quarti di Finale", "Semifinali", "Finale"];
 
             // --- DOM Elements ---
+            const loadingScreen = document.getElementById('loading-screen');
             const startScreen = document.getElementById('start-screen');
             const tournamentContainer = document.getElementById('tournament-container');
             const categorySelect = document.getElementById('category-select');
@@ -324,11 +388,15 @@
             const sizeWarning = document.getElementById('size-warning');
             const bracket = document.getElementById('tournament-bracket');
             const winnerDisplay = document.getElementById('winner-display');
+            const userIdDisplay = document.getElementById('user-id-display');
 
             const fileInput = document.getElementById('file-input');
             const newCategoryNameInput = document.getElementById('new-category-name');
             const uploadCategoryButton = document.getElementById('upload-category-button');
             const uploadFeedback = document.getElementById('upload-feedback');
+
+            let currentUserId = null;
+            const appId = window.__app_id;
 
             // --- FUNCTIONS ---
             function shuffle(array) {
@@ -341,7 +409,6 @@
 
             function validateTournamentSize() {
                 const selectedCategory = categorySelect.value;
-                // Ensure the selected category exists in dishData
                 if (!dishData.hasOwnProperty(selectedCategory)) {
                     sizeWarning.textContent = "Categoria selezionata non valida.";
                     sizeWarning.classList.remove('hidden');
@@ -428,17 +495,16 @@
                             connector.className = 'match-connector';
                             matchDiv.appendChild(connector);
 
-                            // Calculate connector height dynamically for visual alignment
-                            const baseMatchHeight = 80; // min-height of .match-pair
-                            const matchMargin = 30; // margin-bottom of .match (15px top + 15px bottom)
+                            const baseMatchHeight = 70; // min-height of .match-pair
+                            const matchMargin = 24; // margin-bottom of .match (12px top + 12px bottom)
                             const roundHeight = (baseMatchHeight + matchMargin) * Math.pow(2, i);
                             const connectorHeight = roundHeight - baseMatchHeight;
 
-                            if (j % 2 === 0) { // Only add round connector for the first match of a pair
+                            if (j % 2 === 0) {
                                 const roundConnector = document.createElement('div');
                                 roundConnector.className = 'round-connector';
-                                roundConnector.style.height = `${connectorHeight + baseMatchHeight}px`; // Adjust height based on round
-                                roundConnector.style.top = `calc(50% - ${connectorHeight / 2}px)`; // Center vertically
+                                roundConnector.style.height = `${connectorHeight + baseMatchHeight}px`;
+                                roundConnector.style.top = `calc(50% - ${connectorHeight / 2}px)`;
                                 matchDiv.appendChild(roundConnector);
                             }
                         }
@@ -453,7 +519,7 @@
                 const selected = event.currentTarget;
                 const matchPair = selected.parentElement;
                 
-                if (matchPair.dataset.winner || selected.classList.contains('placeholder')) return; // Match already decided or not yet active
+                if (matchPair.dataset.winner || selected.classList.contains('placeholder')) return;
 
                 const competitors = Array.from(matchPair.getElementsByClassName('competitor'));
                 const winner = selected;
@@ -486,7 +552,6 @@
                     nextSlot.textContent = winner.textContent;
                     nextSlot.classList.remove('placeholder');
 
-                    // Check if the opponent is ready to enable the next match
                     const opponentSlotQuery = isFirstInNextPair ?
                         `[data-competitor-id="r${nextRound}m${nextMatch}c2"]` :
                         `[data-competitor-id="r${nextRound}m${nextMatch}c1"]`;
@@ -497,7 +562,6 @@
                         opponentSlot.addEventListener('click', handleMatchClick);
                     }
                 } else {
-                    // Final winner
                     displayWinner(winner.textContent);
                 }
             }
@@ -514,55 +578,122 @@
             }
 
             // Function to add new data from CSV
-            function addDataFromCSV(categoryName, csvContent) {
+            async function addDataFromCSV(categoryName, csvContent) {
                 const lines = csvContent.split('\n');
                 const newItems = [];
-                // Assuming CSV has tiers in columns, we'll take all non-empty values from the first 4 columns
                 lines.forEach(line => {
                     const cells = line.split(',').map(cell => cell.trim());
-                    for (let i = 0; i < Math.min(cells.length, 4); i++) { // Limit to first 4 columns (Tiers)
-                        const item = cells[i].toLowerCase().replace(/"/g, ''); // Remove quotes
-                        if (item && item !== 'v' && !item.includes('tier') && !item.includes('1) inserire') && !item.includes('2) rispettare') && !item.includes('3) non andiamo') && !item.includes('1) dovete immaginare') && !item.includes('2) ogni concorrente') && !item.includes('3) non si può immaginare') && !item.includes('4) l\'aggiunta di')) { // Filter out empty, 'v', and 'tier' headers, and instruction rows
+                    for (let i = 0; i < Math.min(cells.length, 4); i++) {
+                        const item = cells[i].toLowerCase().replace(/"/g, '');
+                        if (item && item !== 'v' && !item.includes('tier') && !item.includes('1) inserire') && !item.includes('2) rispettare') && !item.includes('3) non andiamo') && !item.includes('1) dovete immaginare') && !item.includes('2) ogni concorrente') && !item.includes('3) non si può immaginare') && !item.includes('4) l\'aggiunta di')) {
                             newItems.push(item);
                         }
                     }
                 });
-                // Use a Set to ensure uniqueness
-                dishData[categoryName] = [...new Set(newItems)];
-                console.log(`Loaded ${dishData[categoryName].length} items for category: ${categoryName}`);
+                const uniqueItems = [...new Set(newItems)];
+
+                if (currentUserId) {
+                    try {
+                        const categoryRef = doc(db, `artifacts/${appId}/users/${currentUserId}/categories`, categoryName);
+                        await setDoc(categoryRef, {
+                            name: categoryName,
+                            items: uniqueItems
+                        });
+                        uploadFeedback.textContent = `Categoria "${categoryName}" caricata e salvata con successo!`;
+                        uploadFeedback.className = "text-sm mt-2 text-green-600";
+                    } catch (e) {
+                        uploadFeedback.textContent = `Errore durante il salvataggio della categoria: ${e.message}`;
+                        uploadFeedback.className = "text-sm mt-2 text-red-500";
+                        console.error("Error saving document: ", e);
+                    }
+                } else {
+                    // If not authenticated, just add to local data for current session
+                    dishData[categoryName] = uniqueItems;
+                    uploadFeedback.textContent = `Categoria "${categoryName}" caricata (non salvata, utente non autenticato).`;
+                    uploadFeedback.className = "text-sm mt-2 text-orange-500";
+                }
+                uploadFeedback.classList.remove('hidden');
+                updateCategorySelect();
             }
 
             // Update category select dropdown dynamically
             function updateCategorySelect() {
-                const currentSelectedValue = categorySelect.value; // Store current selection
-                categorySelect.innerHTML = ''; // Clear existing options
+                const currentSelectedValue = categorySelect.value;
+                categorySelect.innerHTML = '';
                 for (const key in dishData) {
-                    if (dishData.hasOwnProperty(key)) {
+                    if (dishData.hasOwnProperty(key) && dishData[key].length > 0) { // Only add categories with items
                         const option = document.createElement('option');
                         option.value = key;
-                        // Capitalize first letter and add spaces for display
                         option.textContent = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
                         categorySelect.appendChild(option);
                     }
                 }
-                // Try to re-select the previously selected category, or default to 'primi'
                 if (dishData.hasOwnProperty(currentSelectedValue)) {
                     categorySelect.value = currentSelectedValue;
+                } else if (Object.keys(dishData).length > 0) {
+                    categorySelect.value = Object.keys(dishData)[0]; // Select first available category
                 } else {
-                    categorySelect.value = 'primi';
+                    categorySelect.innerHTML = '<option value="">Nessuna categoria disponibile</option>';
+                    startButton.disabled = true;
+                    startButton.classList.add('opacity-50', 'cursor-not-allowed');
                 }
-                validateTournamentSize(); // Re-validate after updating options
+                validateTournamentSize();
             }
 
             function initApp() {
-                startScreen.classList.remove('hidden');
+                loadingScreen.classList.remove('hidden');
+                startScreen.classList.add('hidden');
                 tournamentContainer.classList.add('hidden');
-                winnerDisplay.innerHTML = ''; // Clear any previous winner display
-                uploadFeedback.classList.add('hidden'); // Hide feedback message
-                fileInput.value = ''; // Clear file input
-                newCategoryNameInput.value = ''; // Clear category name input
-                updateCategorySelect(); // Populate categories on init
+                winnerDisplay.innerHTML = '';
+                uploadFeedback.classList.add('hidden');
+                fileInput.value = '';
+                newCategoryNameInput.value = '';
+                // Categories will be loaded by onAuthStateChanged listener
             }
+
+            // --- Firebase Authentication and Data Loading ---
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = `ID Utente: ${currentUserId}`;
+                    console.log("Authenticated as:", currentUserId);
+
+                    // Load user-specific categories from Firestore
+                    const categoriesColRef = collection(db, `artifacts/${appId}/users/${currentUserId}/categories`);
+                    onSnapshot(categoriesColRef, (snapshot) => {
+                        snapshot.docChanges().forEach(change => {
+                            const categoryName = change.doc.id;
+                            const categoryData = change.doc.data();
+                            if (change.type === "added" || change.type === "modified") {
+                                dishData[categoryName] = categoryData.items;
+                                console.log(`Category ${categoryName} loaded/updated.`);
+                            } else if (change.type === "removed") {
+                                delete dishData[categoryName];
+                                console.log(`Category ${categoryName} removed.`);
+                            }
+                        });
+                        updateCategorySelect();
+                        loadingScreen.classList.add('hidden');
+                        startScreen.classList.remove('hidden');
+                    }, (error) => {
+                        console.error("Error listening to categories:", error);
+                        loadingScreen.innerHTML = `<p class="text-red-500">Errore nel caricamento delle categorie: ${error.message}</p>`;
+                    });
+
+                } else {
+                    // Sign in anonymously if no user is logged in
+                    try {
+                        if (window.__initial_auth_token) {
+                            await signInWithCustomToken(auth, window.__initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Error signing in:", error);
+                        loadingScreen.innerHTML = `<p class="text-red-500">Errore di autenticazione: ${error.message}</p>`;
+                    }
+                }
+            });
 
             // --- Event Listeners ---
             startButton.addEventListener('click', function() {
@@ -601,26 +732,43 @@
                     return;
                 }
 
-                if (dishData.hasOwnProperty(newCategoryName)) {
-                    uploadFeedback.textContent = `La categoria "${newCategoryName}" esiste già. Scegli un altro nome o sovrascrivi.`;
-                    uploadFeedback.className = "text-sm mt-2 text-orange-500";
+                // Check if category name is valid for Firestore document ID
+                const invalidChars = /[.#$/[\]]/;
+                if (invalidChars.test(newCategoryName)) {
+                    uploadFeedback.textContent = "Il nome della categoria non può contenere . # $ / [ ]";
+                    uploadFeedback.className = "text-sm mt-2 text-red-500";
                     uploadFeedback.classList.remove('hidden');
-                    // Optionally, add a confirm dialog here for overwrite
                     return;
                 }
 
+                if (dishData.hasOwnProperty(newCategoryName)) {
+                    // If category exists, prompt user to confirm overwrite
+                    // Using a custom "confirm" message since alert() is not allowed
+                    uploadFeedback.textContent = `La categoria "${newCategoryName}" esiste già. Vuoi sovrascriverla? Clicca di nuovo per confermare.`;
+                    uploadFeedback.className = "text-sm mt-2 text-orange-500";
+                    uploadFeedback.classList.remove('hidden');
+                    // This creates a simple "double click to confirm" behavior for overwrite
+                    if (uploadCategoryButton.dataset.confirmOverwrite === newCategoryName) {
+                        processFileUpload(file, newCategoryName);
+                        delete uploadCategoryButton.dataset.confirmOverwrite; // Reset confirmation
+                    } else {
+                        uploadCategoryButton.dataset.confirmOverwrite = newCategoryName;
+                    }
+                    return;
+                }
+
+                processFileUpload(file, newCategoryName);
+            });
+
+            function processFileUpload(file, categoryName) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = async function(e) {
                     try {
-                        addDataFromCSV(newCategoryName, e.target.result);
-                        updateCategorySelect();
-                        uploadFeedback.textContent = `Categoria "${newCategoryName}" caricata con successo!`;
-                        uploadFeedback.className = "text-sm mt-2 text-green-600";
-                        uploadFeedback.classList.remove('hidden');
-                        newCategoryNameInput.value = ''; // Clear input after successful upload
-                        fileInput.value = ''; // Clear file input
-                        categorySelect.value = newCategoryName; // Select the newly added category
-                        validateTournamentSize(); // Re-validate
+                        await addDataFromCSV(categoryName, e.target.result);
+                        newCategoryNameInput.value = '';
+                        fileInput.value = '';
+                        categorySelect.value = categoryName;
+                        validateTournamentSize();
                     } catch (error) {
                         uploadFeedback.textContent = `Errore durante l'elaborazione del file: ${error.message}`;
                         uploadFeedback.className = "text-sm mt-2 text-red-500";
@@ -634,7 +782,7 @@
                     uploadFeedback.classList.remove('hidden');
                 };
                 reader.readAsText(file);
-            });
+            }
 
             // --- INITIALIZATION ---
             initApp();
